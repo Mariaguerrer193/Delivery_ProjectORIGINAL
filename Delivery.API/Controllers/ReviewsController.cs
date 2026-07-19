@@ -145,5 +145,28 @@ namespace Delivery.API.Controllers
 
             return Ok(new { reviewId = id, message = "Reporte descartado, la reseña se mantiene" });
         }
+
+
+        public class UpdateReviewRequest
+        {
+            public int Rating { get; set; }
+            public string? Comment { get; set; }
+            public string? PhotoUrl { get; set; }
+        }
+
+        // PUT: api/Reviews/5  (Cliente edita su propia reseña)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateReview(int id, [FromBody] UpdateReviewRequest request)
+        {
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null) return NotFound("Reseña no encontrada");
+
+            review.Rating = request.Rating;
+            review.Comment = request.Comment;
+            review.PhotoUrl = request.PhotoUrl;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { reviewId = id, message = "Reseña actualizada correctamente" });
+        }
     }
 }

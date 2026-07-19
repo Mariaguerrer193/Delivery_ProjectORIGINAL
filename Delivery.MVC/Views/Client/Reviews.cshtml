@@ -405,19 +405,22 @@
         }
 
         // ---- Cargar reseñas ya publicadas (de este cliente) ----
+        let myReviewsCache = [];
+
         async function loadReviews() {
         try {
         const res = await fetch(`${API_BASE}/api/Reviews`);
         const allReviews = await res.json();
-        const myReviews = (allReviews || []).filter(r => r.clientId == userId);
-        renderReviews(myReviews, 'reviewsContainer', "Aún no has publicado ninguna reseña.");
+        myReviewsCache = (allReviews || []).filter(r => r.clientId == userId);
+        renderReviews(myReviewsCache, 'reviewsContainer', "Aún no has publicado ninguna reseña.", false, true);
         } catch (err) {
         console.error(err);
         document.getElementById('reviewsContainer').innerHTML = `<p class="text-sm text-[#8A8578] font-mono">No se pudieron cargar tus reseñas.</p>`;
         }
         }
 
-        function renderReviews(reviews, containerId, emptyMessage, showTargetLabel) {
+        // ---- isOwner=true agrega los botones Editar / Eliminar (solo se usa en "Tus reseñas publicadas") ----
+        function renderReviews(reviews, containerId, emptyMessage, showTargetLabel, isOwner) {
         const container = document.getElementById(containerId);
         container.innerHTML = '';
 
@@ -434,7 +437,7 @@
         if(r.productId) target = "Producto";
 
         container.innerHTML += `
-        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]" id="review-card-${r.id}">
         <div class="flex justify-between items-start mb-2">
         <div>
         <h4 class="font-archivo text-base text-[#14120F]">${showTargetLabel ? clientName : target}</h4>
@@ -443,9 +446,77 @@
         </div>
         <p class="text-xs text-neutral-600 font-medium leading-relaxed mt-2">${r.comment || ''}</p>
         ${r.photoUrl ? `<img src="${r.photoUrl}" class="w-24 h-24 object-cover rounded-lg mt-3 border border-[#E4DAC4]" />` : ''}
+        ${isOwner ? `
+        <div class="flex gap-4 mt-3 pt-3 border-t border-dashed border-[#E4DAC4]">
+        <button onclick="startEditReview(${r.id})" class="text-xs font-bold text-[#14120F] hover:text-[#FF4D2E]">✏️ Editar</button>
+        <button onclick="deleteReview(${r.id})" class="text-xs font-bold text-red-500 hover:underline">🗑️ Eliminar</button>
+        </div>` : ''}
         </div>
         `;
         });
+        }
+
+        // ---- Editar reseña propia (edición en línea dentro de la misma tarjeta) ----
+        function startEditReview(id) {
+        const review = myReviewsCache.find(r => r.id === id);
+        if (!review) return;
+
+        const card = document.getElementById(`review-card-${id}`);
+        card.innerHTML = `
+        <div class="flex gap-1 mb-3" id="editStars-${id}">
+        ${[1,2,3,4,5].map(v => `<span class="star edit-star-${id} ${v <= review.rating ? 'active' : ''}" data-value="${v}" onclick="setEditRating(${id}, ${v})">★</span>`).join('')}
+        </div>
+        <textarea id="editComment-${id}" rows="3" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none resize-none">${review.comment || ''}</textarea>
+        <div class="flex gap-2 mt-3">
+        <button onclick="saveEditReview(${id})" class="bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-2 px-4 rounded-xl text-xs font-archivo">GUARDAR</button>
+        <button onclick="loadReviews()" class="bg-white border-2 border-[#E4DAC4] font-bold py-2 px-4 rounded-xl text-xs font-archivo">CANCELAR</button>
+        </div>
+        `;
+        }
+
+        function setEditRating(id, value) {
+        document.querySelectorAll(`.edit-star-${id}`).forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+        });
+        document.getElementById(`editStars-${id}`).dataset.rating = value;
+        }
+
+        async function saveEditReview(id) {
+        const starsWrapper = document.getElementById(`editStars-${id}`);
+        const activeStars = starsWrapper.querySelectorAll(`.edit-star-${id}.active`).length;
+        const rating = starsWrapper.dataset.rating ? parseInt(starsWrapper.dataset.rating) : activeStars;
+        const comment = document.getElementById(`editComment-${id}`).value.trim();
+
+        if (rating === 0) { alert("Selecciona una calificación."); return; }
+        if (!comment) { alert("Escribe un comentario."); return; }
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment })
+        });
+
+        if (res.ok) {
+        loadReviews();
+        } else {
+        alert("Error al actualizar: " + await res.text());
+        }
+        } catch (err) { alert("No se pudo conectar con el servidor."); }
+        }
+
+        async function deleteReview(id) {
+        if (!confirm("¿Seguro que quieres eliminar esta reseña? Esta acción no se puede deshacer.")) return;
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews/${id}`, { method: 'DELETE' });
+
+        if (res.ok) {
+        loadReviews();
+        } else {
+        alert("Error al eliminar: " + await res.text());
+        }
+        } catch (err) { alert("No se pudo conectar con el servidor."); }
         }
 
         // ================= TAB BUSCAR =================
@@ -513,7 +584,7 @@
 
         const res = await fetch(endpoint);
         const reviews = await res.json();
-        renderReviews(reviews || [], 'searchResultsContainer', "Todavía no hay reseñas para esta opción.", true);
+        renderReviews(reviews || [], 'searchResultsContainer', "Todavía no hay reseñas para esta opción.", true, false);
         } catch (err) {
         console.error(err);
         container.innerHTML = `<p class="text-sm text-[#8A8578]">No se pudieron cargar las reseñas.</p>`;
