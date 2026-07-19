@@ -169,27 +169,46 @@
                     <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">🔍 Consultar reseñas</h3>
 
                     <div class="space-y-4">
+                        <!-- Selector de Entidad (con la nueva opción Platos) -->
                         <div>
-                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿De qué quieres ver reseñas?</label>
-                            <div class="flex gap-3">
-                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿Qué quieres ver?</label>
+                            <div class="flex gap-2 flex-wrap">
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-3 py-2 cursor-pointer text-xs font-semibold">
                                     <input type="radio" name="searchType" value="restaurant" checked onchange="onSearchTypeChanged()" /> 🍽️ Restaurante
                                 </label>
-                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-3 py-2 cursor-pointer text-xs font-semibold">
                                     <input type="radio" name="searchType" value="delivery" onchange="onSearchTypeChanged()" /> 🛵 Repartidor
+                                </label>
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-3 py-2 cursor-pointer text-xs font-semibold">
+                                    <input type="radio" name="searchType" value="product" onchange="onSearchTypeChanged()" /> 🍔 Platos
                                 </label>
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]" id="searchSelectLabel">Selecciona un restaurante</label>
-                            <select id="searchSelect" onchange="searchReviews()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none">
-                                <option value="">Cargando opciones...</option>
-                            </select>
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Dropdown de selección -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]" id="searchSelectLabel">Selecciona...</label>
+                                <select id="searchSelect" onchange="searchReviews()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2 text-sm font-medium outline-none">
+                                    <option value="">Primero elige una categoría...</option>
+                                </select>
+                            </div>
+
+                            <!-- Nuevo Filtro por Rating -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Filtrar por estrellas</label>
+                                <select id="ratingFilter" onchange="searchReviews()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2 text-sm font-medium outline-none">
+                                    <option value="0">Todas las estrellas</option>
+                                    <option value="5">★★★★★ (5)</option>
+                                    <option value="4">★★★★☆ (4)</option>
+                                    <option value="3">★★★☆☆ (3)</option>
+                                    <option value="2">★★☆☆☆ (2)</option>
+                                    <option value="1">★☆☆☆☆ (1)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
-
                 <div class="mt-6 max-w-3xl space-y-3" id="searchResultsContainer"></div>
             </div>
 
@@ -547,19 +566,35 @@
         populateSearchSelect();
         }
 
-        function populateSearchSelect() {
+        async function populateSearchSelect() {
         const type = document.querySelector('input[name="searchType"]:checked').value;
         const select = document.getElementById('searchSelect');
-        select.innerHTML = `<option value="">Selecciona...</option>`;
+        select.innerHTML = `<option value="">Cargando...</option>`;
+
+        try {
+        let items = [];
 
         if (type === "restaurant") {
-        restaurantsList.forEach(r => {
-        select.innerHTML += `<option value="${r.id}">${r.commercialName || r.name}</option>`;
+        items = restaurantsList; // Ya los tienes en caché
+        } else if (type === "delivery") {
+        items = deliveriesList; // Ya los tienes en caché
+        } else if (type === "product") {
+        // Como no los tienes en caché, los traemos de la API
+        const res = await fetch(`${API_BASE}/api/Products`);
+        items = res.ok ? await res.json() : [];
+        }
+
+        select.innerHTML = `<option value="">Selecciona...</option>`;
+
+        items.forEach(item => {
+        // Ajustamos el nombre según sea Restaurante, Repartidor o Plato
+        const label = item.commercialName || item.name || item.brand;
+        select.innerHTML += `<option value="${item.id}">${label}</option>`;
         });
-        } else {
-        deliveriesList.forEach(d => {
-        select.innerHTML += `<option value="${d.id}">${d.name}</option>`;
-        });
+
+        } catch (err) {
+        console.error("Error al cargar elementos:", err);
+        select.innerHTML = `<option value="">Error al cargar</option>`;
         }
 
         document.getElementById('searchResultsContainer').innerHTML = '';
@@ -568,26 +603,26 @@
         async function searchReviews() {
         const type = document.querySelector('input[name="searchType"]:checked').value;
         const id = document.getElementById('searchSelect').value;
+        const ratingFilter = parseInt(document.getElementById('ratingFilter').value);
         const container = document.getElementById('searchResultsContainer');
 
-        if (!id) {
-        container.innerHTML = '';
-        return;
-        }
-
-        container.innerHTML = `<p class="text-sm text-[#8A8578]">Cargando reseñas...</p>`;
+        if (!id) { container.innerHTML = ''; return; }
+        container.innerHTML = `<p class="text-sm text-[#8A8578]">Buscando...</p>`;
 
         try {
-        const endpoint = type === "restaurant"
-        ? `${API_BASE}/api/Reviews/restaurant/${id}`
-        : `${API_BASE}/api/Reviews/delivery/${id}`;
-
+        // Ajusta el endpoint según tu API (aquí supongo la lógica)
+        let endpoint = `${API_BASE}/api/Reviews/${type}/${id}`;
         const res = await fetch(endpoint);
-        const reviews = await res.json();
-        renderReviews(reviews || [], 'searchResultsContainer', "Todavía no hay reseñas para esta opción.", true, false);
+        let reviews = await res.json();
+
+        // Aplicamos el filtro de estrellas en el cliente si es 0 (todas) o coincide
+        if (ratingFilter > 0) {
+        reviews = reviews.filter(r => r.rating === ratingFilter);
+        }
+
+        renderReviews(reviews || [], 'searchResultsContainer', "No hay reseñas que coincidan con estos filtros.", true, false);
         } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p class="text-sm text-[#8A8578]">No se pudieron cargar las reseñas.</p>`;
+        container.innerHTML = `<p class="text-sm text-red-500">Error al cargar reseñas.</p>`;
         }
         }
 
