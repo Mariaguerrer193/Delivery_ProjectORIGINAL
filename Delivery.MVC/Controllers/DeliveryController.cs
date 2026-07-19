@@ -10,6 +10,8 @@ namespace Delivery.MVC.Controllers
         public IActionResult OrderDetail() { return View(); }
         public IActionResult Reports() { return View(); }
 
+        public IActionResult Vehicle() { return View(); }
+
         [HttpGet("Delivery/Tracking")]
         public IActionResult Tracking([FromQuery] int orderId)
         {

@@ -1,0 +1,280 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Panel de Repartidor — Mi Vehículo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .tab-btn.active {
+        background: #14120F;
+        color: white;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- BARRA LATERAL (Navegación del Repartidor Sincronizada) -->
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · REPARTIDOR</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">📦 Ofertas y entrega</a>
+                <a href="/Delivery/Earnings" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">💰 Ganancias</a>
+                <a href="/Delivery/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Delivery/Reports" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🚨 Mis Reportes</a>
+                <a href="/Delivery/Vehicle" class="px-4 py-3 rounded-xl tab-btn active font-semibold">🚗 Mi Vehículo</a>
+            </nav>
+        </div>
+        <div>
+            <div class="text-xs text-[#8A8578] font-mono mb-2" id="deliveryLabel">Repartidor</div>
+            <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white">⚠️ CERRAR SESIÓN</button>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <h1 class="font-archivo text-2xl mb-6">Gestionar Mis Vehículos</h1>
+
+        <!-- Formulario estilo "+ Agregar Producto" -->
+        <div id="addVehicleForm" class="bg-white border-2 border-[#14120F] rounded-2xl p-6 mb-8 max-w-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+            <h3 class="font-archivo text-sm uppercase text-neutral-500 mb-4">+ Registrar nuevo vehículo (Máx 3)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input id="vType" placeholder="Tipo (ej. Moto, Auto)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                <input id="vBrand" placeholder="Marca (ej. Honda, Chevrolet)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                <input id="vModel" placeholder="Modelo (ej. CGL 125, Aveo)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                <input id="vPlate" placeholder="Placa (ej. AAA-1234)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                <input id="vColor" placeholder="Color" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                <input id="vYear" type="number" placeholder="Año" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+            </div>
+            <button onclick="registerVehicle()" class="mt-4 w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-sm transition-colors hover:bg-[#14120F]">Guardar Vehículo</button>
+        </div>
+
+        <!-- Título del Listado -->
+        <h3 class="font-archivo text-xs uppercase tracking-wider text-amber-600 mb-4">📋 Mis Vehículos Registrados</h3>
+
+        <!-- Contenedor dinámico de tarjetas de vehículos -->
+        <div id="vehicleList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl">
+            <!-- Cargando o Mensaje de Vacío Dinámico -->
+        </div>
+    </main>
+
+    <!-- VENTANA MODAL PARA EDITAR VEHÍCULO (Estilo exacto al de Restaurante) -->
+    <div id="editVehicleModal" class="hidden fixed inset-0 bg-black/60 z-[5000] flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-md w-full shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col">
+            <h3 class="font-archivo text-base mb-4 text-black">✏️ Editar Detalles del Vehículo</h3>
+
+            <input type="hidden" id="editVId" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Tipo de Vehículo:</label>
+                    <input id="editVType" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Placa:</label>
+                    <input id="editVPlate" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Marca:</label>
+                    <input id="editVBrand" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Modelo:</label>
+                    <input id="editVModel" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Color:</label>
+                    <input id="editVColor" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Año:</label>
+                    <input id="editVYear" type="number" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-5">
+                <button type="button" onclick="cerrarModalEditar()" class="flex-1 bg-white border-2 border-[#14120F] py-2.5 rounded-xl text-xs font-bold text-black hover:bg-neutral-50 transition-all">Cancelar</button>
+                <button type="button" onclick="submitEdit()" class="flex-1 bg-[#FF4D2E] text-white py-2.5 rounded-xl text-xs font-bold hover:bg-[#14120F] transition-all">Actualizar Vehículo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        const DELIVERY_NAME = localStorage.getItem('userName') || "Repartidor Real";
+
+        document.getElementById('deliveryLabel').innerText = DELIVERY_NAME;
+
+        // Cargar y Renderizar dinámicamente los vehículos de la API
+        async function loadVehicles() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Vehicles`);
+        if (!res.ok) return;
+        const list = await res.json();
+        const container = document.getElementById('vehicleList');
+        container.innerHTML = '';
+
+        // Si no hay datos registrados en la API, mostramos el mensaje dinámico limpio
+        if (!list || list.length === 0) {
+        container.className = "block w-full max-w-2xl";
+        container.innerHTML = `
+        <div class="bg-amber-50 border-2 border-dashed border-amber-400 p-6 rounded-2xl text-center">
+        <p class="text-sm font-medium text-amber-800">⚠️ No hay vehículos registrados actualmente.</p>
+        <p class="text-xs text-amber-600 mt-1">Por favor, registra tu vehículo en el formulario de arriba para empezar.</p>
+        </div>`;
+        return;
+        }
+
+        // Restauramos el diseño grid si hay elementos
+        container.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl";
+
+        list.forEach(v => {
+        container.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] flex flex-col justify-between p-4">
+        <div>
+        <span class="font-mono text-[10px] text-[#8A8578] uppercase tracking-wider block mb-1">${v.type || 'Vehículo'}</span>
+        <h4 class="font-archivo text-sm text-[#14120F] truncate">${v.brand} ${v.model}</h4>
+        <p class="text-xs text-neutral-500 mt-1">Color: ${v.color || 'Sin color'}</p>
+        <div class="flex justify-between items-center mt-3 pt-3 border-t border-dashed border-[#E4DAC4]">
+        <span class="text-xs font-mono font-bold text-[#FF4D2E]">Placa: ${v.plate}</span>
+        <span class="text-[10px] font-mono bg-[#FBF6EC] px-2 py-0.5 rounded border border-[#E4DAC4]">Año: ${v.year}</span>
+        </div>
+        </div>
+        <div class="flex gap-2 mt-4 pt-2">
+        <button onclick="openEdit(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="flex-1 bg-white border-2 border-[#14120F] text-[11px] font-bold py-1.5 rounded-xl hover:bg-neutral-100 shadow-[2px_2px_0px_0px_rgba(20,18,15,1)] transition-all">
+        🛠️ Editar
+        </button>
+        <button onclick="deleteVehicle(${v.id})" class="flex-1 bg-white border-2 border-red-600 text-red-600 text-[11px] font-bold py-1.5 rounded-xl hover:bg-red-50 shadow-[2px_2px_0px_0px_rgba(220,38,38,1)] transition-all">
+        🗑️ Eliminar
+        </button>
+        </div>
+        </div>`;
+        });
+        } catch (err) {
+        console.error("Error al cargar vehículos:", err);
+        }
+        }
+
+        // Crear un vehículo vía POST
+        async function registerVehicle() {
+        try {
+        const currentRes = await fetch(`${API_BASE}/api/Vehicles`);
+        const currentList = await currentRes.json();
+
+        if (currentList && currentList.length >= 3) {
+        alert("No puedes registrar más de 3 vehículos.");
+        return;
+        }
+
+        const data = {
+        type: document.getElementById('vType').value,
+        brand: document.getElementById('vBrand').value,
+        model: document.getElementById('vModel').value,
+        plate: document.getElementById('vPlate').value,
+        color: document.getElementById('vColor').value,
+        year: parseInt(document.getElementById('vYear').value) || 0,
+        isAvailable: true
+        };
+
+        const res = await fetch(`${API_BASE}/api/Vehicles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+        // Limpiar formulario
+        ['vType', 'vBrand', 'vModel', 'vPlate', 'vColor', 'vYear'].forEach(id => document.getElementById(id).value = '');
+        loadVehicles();
+        } else {
+        alert("Error al guardar el vehículo en el servidor.");
+        }
+        } catch (err) {
+        console.error(err);
+        }
+        }
+
+        // Abrir Modal de Edición asignando valores reales obtenidos
+        function openEdit(v) {
+        document.getElementById('editVId').value = v.id;
+        document.getElementById('editVType').value = v.type;
+        document.getElementById('editVBrand').value = v.brand;
+        document.getElementById('editVModel').value = v.model;
+        document.getElementById('editVPlate').value = v.plate;
+        document.getElementById('editVColor').value = v.color;
+        document.getElementById('editVYear').value = v.year;
+
+        document.getElementById('editVehicleModal').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+        document.getElementById('editVehicleModal').classList.add('hidden');
+        }
+
+        // Actualizar datos del vehículo vía PUT
+        async function submitEdit() {
+        const id = document.getElementById('editVId').value;
+        try {
+        const payload = {
+        id: parseInt(id),
+        type: document.getElementById('editVType').value,
+        brand: document.getElementById('editVBrand').value,
+        model: document.getElementById('editVModel').value,
+        plate: document.getElementById('editVPlate').value,
+        color: document.getElementById('editVColor').value,
+        year: parseInt(document.getElementById('editVYear').value) || 0,
+        isAvailable: true
+        };
+
+        const res = await fetch(`${API_BASE}/api/Vehicles/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        cerrarModalEditar();
+        loadVehicles();
+        } else {
+        alert("Error al actualizar el vehículo.");
+        }
+        } catch (err) {
+        console.error(err);
+        }
+        }
+
+        // Eliminar vehículo vía DELETE
+        async function deleteVehicle(id) {
+        if (confirm("¿Estás seguro de que deseas eliminar este vehículo permanentemente?")) {
+        try {
+        const res = await fetch(`${API_BASE}/api/Vehicles/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+        loadVehicles();
+        } else {
+        alert("No se pudo eliminar el vehículo.");
+        }
+        } catch (err) {
+        console.error(err);
+        }
+        }
+        }
+
+        // Carga inicial al entrar a la vista
+        loadVehicles();
+    </script>
+</body>
+</html>
