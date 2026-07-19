@@ -1,0 +1,640 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Panel de Restaurante — Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .tab-btn.active {
+        background: #14120F;
+        color: white;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · RESTAURANTE</div>
+            <div class="flex flex-col gap-1 text-sm font-medium">
+                <button onclick="showTab('pedidos')" class="tab-btn active px-4 py-3 rounded-xl text-left" data-tab="pedidos">📥 Monitor de Cocina</button>
+                <button onclick="showTab('menu')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="menu">🍽️ Mi Menú</button>
+                <button onclick="showTab('resenas')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="resenas">⭐ Opiniones</button>
+                <button onclick="showTab('finanzas')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="finanzas">📊 Finanzas y Ventas</button>
+                <button onclick="showTab('reportar')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="reportar">🚨 Reportar Incidente</button>
+            </div>
+        </div>
+        <div>
+            <div class="text-xs text-[#8A8578] font-mono mb-2" id="restaurantLabel">Cargando...</div>
+            <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white">⚠️ CERRAR SESIÓN</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+
+        <!-- TAB: MONITOR DE COCINA -->
+        <div id="tab-pedidos">
+            <div class="flex justify-between items-center mb-6 max-w-5xl">
+                <h1 class="font-archivo text-2xl">Monitor de Cocina</h1>
+                <button onclick="loadOrdersConsole()" class="bg-white border-2 border-[#14120F] hover:bg-neutral-100 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(20,18,15,1)] transition-all">
+                    🔄 Actualizar Monitor
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl">
+                <div>
+                    <h3 class="font-archivo text-xs uppercase tracking-wider text-amber-600 mb-4">🍳 Órdenes Activas en Cocina</h3>
+                    <div id="ordersCocinaList" class="space-y-4"></div>
+                </div>
+                <div>
+                    <h3 class="font-archivo text-xs uppercase tracking-wider text-[#6B8F71] mb-4">✅ Entregas Finalizadas</h3>
+                    <div id="ordersHistorialList" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: MENÚ -->
+        <div id="tab-menu" class="hidden">
+            <h1 class="font-archivo text-2xl mb-6">Mi Menú</h1>
+
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 mb-6 max-w-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                <h3 class="font-archivo text-sm uppercase text-neutral-500 mb-4">+ Agregar producto</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input id="pName" placeholder="Nombre del plato" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="pPrice" type="number" step="0.01" placeholder="Precio (ej. 8.50)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="pCategory" placeholder="Categoría" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="pStock" type="number" placeholder="Stock disponible" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="pPhoto" placeholder="URL de la Foto (ej. https://images.unsplash.com/...)" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm sm:col-span-2 outline-none focus:border-[#FF4D2E]" />
+                    <input id="pDescription" placeholder="Descripción detallada del platillo" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm sm:col-span-2 outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <button onclick="addProduct()" class="mt-4 w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-sm transition-colors hover:bg-[#14120F]">Agregar al menú</button>
+            </div>
+
+            <div id="productsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl"></div>
+        </div>
+
+        <!-- TAB: RESEÑAS -->
+        <div id="tab-resenas" class="hidden">
+            <h1 class="font-archivo text-2xl mb-6">Opiniones de Clientes</h1>
+            <div id="reviewsList" class="space-y-4 max-w-2xl"></div>
+        </div>
+
+        <!-- TAB: FINANZAS -->
+        <div id="tab-finanzas" class="hidden">
+            <h1 class="font-archivo text-2xl mb-6">Ventas y Métricas de Mi Local</h1>
+
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-4xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] mb-8">
+                <h3 class="font-archivo text-xs uppercase tracking-wider text-neutral-400 mb-4">🔍 Filtrar Estados Financieros</h3>
+                <div class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Desde:</label>
+                        <input id="fDesde" type="date" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Hasta:</label>
+                        <input id="fHasta" type="date" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    </div>
+                    <button onclick="calculateLocalMetrics()" class="bg-[#14120F] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#FF4D2E]">Calcular Métricas</button>
+                    <button onclick="downloadReport()" class="bg-white border-2 border-[#14120F] text-black px-5 py-2 rounded-xl text-xs font-archivo shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-50">📥 Descargar Reporte PDF</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl">
+                <div class="bg-white border-2 border-[#14120F] p-6 rounded-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <p class="text-xs font-bold uppercase tracking-wider text-neutral-400">Ingresos Totales</p>
+                    <p class="font-archivo text-3xl text-[#FF4D2E] mt-2" id="mIngresos">$0.00</p>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-6 rounded-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <p class="text-xs font-bold uppercase tracking-wider text-neutral-400">Pedidos Procesados</p>
+                    <p class="font-archivo text-3xl text-neutral-800 mt-2" id="mPedidos">0</p>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-6 rounded-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <p class="text-xs font-bold uppercase tracking-wider text-neutral-400">Plato Estrella</p>
+                    <p class="font-archivo text-sm text-neutral-800 truncate mt-3 select-none" id="mTopProduct">Ninguno aún</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: REPORTAR INCIDENTE (Igual al del cliente) -->
+        <div id="tab-reportar" class="hidden">
+            <h1 class="font-archivo text-2xl mb-6">🚨 Reportar Incidente de Pedido</h1>
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Selecciona una orden entregada para reportar</label>
+                        <select id="reportOrderSelect" onchange="onReportOrderSelected()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] rounded-xl px-4 py-2.5 text-sm outline-none">
+                            <option value="">Cargando órdenes...</option>
+                        </select>
+                    </div>
+
+                    <div id="reportTargetWrapper" class="hidden">
+                        <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿A quién quieres reportar?</label>
+                        <div class="flex gap-3">
+                            <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                <input type="radio" name="reportTargetType" value="client" checked /> 🙋 Cliente
+                            </label>
+                            <label id="reportDeliveryLabel" class="hidden items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                <input type="radio" name="reportTargetType" value="delivery" /> 🛵 Repartidor
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Motivo del reporte</label>
+                        <textarea id="reportReason" rows="4" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] rounded-xl px-4 py-2.5 text-sm outline-none" placeholder="Describe lo sucedido..."></textarea>
+                    </div>
+                    <button onclick="submitEntityReport()" class="w-full bg-[#14120F] text-white font-bold py-3 rounded-xl text-sm hover:bg-red-600">ENVIAR REPORTE</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- VENTANA MODAL PARA EDITAR PRODUCTO COMPLETO -->
+    <div id="editProductModal" class="hidden fixed inset-0 bg-black/60 z-[5000] flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-xl w-full shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col">
+            <h3 class="font-archivo text-base mb-4 text-black">✏️ Editar Detalles del Platillo</h3>
+
+            <input type="hidden" id="editPId" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Nombre del plato:</label>
+                    <input id="editPName" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Precio ($):</label>
+                    <input id="editPPrice" type="number" step="0.01" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Categoría:</label>
+                    <input id="editPCategory" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Stock disponible:</label>
+                    <input id="editPStock" type="number" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">URL de la Foto:</label>
+                    <input id="editPPhoto" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Descripción detallada:</label>
+                    <input id="editPDescription" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-5">
+                <button type="button" onclick="cerrarModalEditar()" class="flex-1 bg-white border-2 border-[#14120F] py-2.5 rounded-xl text-xs font-bold text-black hover:bg-neutral-50 transition-all">Cancelar</button>
+                <button type="button" onclick="submitEditProduct()" class="flex-1 bg-[#FF4D2E] text-white py-2.5 rounded-xl text-xs font-bold hover:bg-[#14120F] transition-all">Actualizar Plato</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const RESTAURANT_ID = localStorage.getItem('userId');
+        const RESTAURANT_NAME = localStorage.getItem('userName');
+        const API_BASE = "https://localhost:7042";
+
+        // Ajustar fechas locales reales para el calendario base controlando el desajuste de zona horaria
+        const dLocal = new Date();
+        const offset = dLocal.getTimezoneOffset();
+        const dCorregido = new Date(dLocal.getTime() - (offset * 60 * 1000));
+        const todayStr = dCorregido.toISOString().split('T')[0];
+
+        document.getElementById('fDesde').value = todayStr;
+        document.getElementById('fHasta').value = todayStr;
+
+        if (!RESTAURANT_ID || localStorage.getItem('userRole') !== 'Restaurant') {
+        window.location.href = '/Auth/Login';
+        } else {
+        document.getElementById('restaurantLabel').innerText = RESTAURANT_NAME;
+        }
+
+        function showTab(tab) {
+        ['pedidos', 'menu', 'resenas', 'finanzas', 'reportar'].forEach(t => document.getElementById('tab-' + t).classList.add('hidden'));
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+        if (tab === 'pedidos') loadOrdersConsole();
+        if (tab === 'menu') loadProducts();
+        if (tab === 'resenas') loadMyReviews();
+        if (tab === 'finanzas') calculateLocalMetrics();
+        if (tab === 'reportar') populateReportOrders();
+        }
+
+        async function loadOrdersConsole() {
+        const containerCocina = document.getElementById('ordersCocinaList');
+        const containerHistorial = document.getElementById('ordersHistorialList');
+        containerCocina.innerHTML = '';
+        containerHistorial.innerHTML = '';
+
+        await Promise.all([
+        fetchAndRenderOrders('Pendiente', containerCocina),
+        fetchAndRenderOrders('En preparación', containerCocina),
+        fetchAndRenderOrders('En camino', containerCocina),
+        fetchAndRenderOrders('Entregado', containerHistorial)
+        ]);
+
+        if (containerCocina.innerHTML === '') containerCocina.innerHTML = `<p class="text-xs font-mono text-[#8A8578]">No hay órdenes activas en preparación.</p>`;
+        if (containerHistorial.innerHTML === '') containerHistorial.innerHTML = `<p class="text-xs font-mono text-[#8A8578]">No registras entregas finalizadas hoy.</p>`;
+        }
+
+        async function fetchAndRenderOrders(status, targetContainer) {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/by-status/${status}`);
+        if (!res.ok) return;
+        const orders = await res.json();
+
+        const myOrders = (orders || []).filter(o =>
+        o.detailOrders && o.detailOrders.some(d => d.product && d.product.restaurantId == RESTAURANT_ID)
+        );
+
+        myOrders.forEach(o => {
+        let rdrInfo = '';
+        if (o.delivery) {
+        rdrInfo = `
+        <div class="mt-3 p-2.5 bg-[#FBF6EC] border border-[#E4DAC4] rounded-xl flex items-center justify-between">
+        <div>
+        <p class="text-xs font-bold text-neutral-800">🛵 Repartidor: ${o.delivery.name}</p>
+        <p class="text-[10px] font-mono text-neutral-500">Telf: ${o.delivery.phone || '099554412'}</p>
+        </div>
+        <a href="tel:${o.delivery.phone || '#'}" class="bg-white border border-[#14120F] px-2 py-1 rounded-lg text-[10px] font-bold hover:bg-[#14120F] hover:text-white">📞 Llamar</a>
+        </div>
+        `;
+        }
+
+        targetContainer.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-4 shadow-[3px_3px_0px_0px_rgba(20,18,15,1)] relative">
+        <div class="flex justify-between items-start">
+        <div>
+        <span class="font-mono text-[10px] bg-neutral-900 text-white px-2 py-0.5 rounded font-bold">#ORD-${o.id}</span>
+        <h4 class="text-sm font-bold mt-2">${o.client ? o.client.name : 'Cliente Registrado'}</h4>
+        </div>
+        <span class="text-[9px] font-archivo uppercase px-2 py-0.5 rounded border border-[#14120F] ${status === 'Pendiente' || status === 'En preparación' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${status}</span>
+        </div>
+        <div class="mt-2 pt-2 border-t border-dashed border-[#E4DAC4]">
+        <ul class="text-xs text-neutral-700 space-y-0.5 font-mono">
+        ${(o.detailOrders || []).map(d => `<li>• ${d.quantity}x ${d.product ? d.product.name : 'Platillo'}</li>`).join('')}
+        </ul>
+        </div>
+        ${rdrInfo}
+        </div>
+        `;
+        });
+        } catch (err) { console.error(err); }
+        }
+
+        async function loadProducts() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Products`);
+        const products = await res.json();
+        const list = document.getElementById('productsList');
+        list.innerHTML = '';
+
+        const myProducts = products.filter(p => p.restaurantId == RESTAURANT_ID);
+
+        myProducts.forEach(p => {
+        const img = p.photoUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';
+
+        list.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] flex flex-col justify-between">
+        <div>
+        <div class="h-36 bg-cover bg-center" style="background-image: url('${img}')"></div>
+        <div class="p-4">
+        <span class="font-mono text-[10px] text-[#8A8578] uppercase tracking-wider block mb-1">${p.category || 'Varios'}</span>
+        <h4 class="font-archivo text-sm text-[#14120F] truncate">${p.name}</h4>
+        <p class="text-xs text-neutral-500 line-clamp-2 mt-1 min-h-[32px]">${p.description || 'Sin descripción.'}</p>
+        <div class="flex justify-between items-center mt-3 pt-3 border-t border-dashed border-[#E4DAC4]">
+        <span class="text-sm font-mono font-bold text-[#FF4D2E]">$${p.price.toFixed(2)}</span>
+        <span class="text-[10px] font-mono bg-[#FBF6EC] px-2 py-0.5 rounded border border-[#E4DAC4]">Stock: ${p.stock}</span>
+        </div>
+        </div>
+        </div>
+        <div class="p-4 pt-0 mb-2">
+        <button onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="w-full bg-white border-2 border-[#14120F] text-xs font-bold py-2 rounded-xl hover:bg-neutral-100 shadow-[2px_2px_0px_0px_rgba(20,18,15,1)] transition-all active:translate-y-0.5 active:shadow-none">
+        🛠️ Editar Plato
+        </button>
+        </div>
+        </div>
+        `;
+        });
+        } catch (err) { console.error(err); }
+        }
+
+        function abrirModalEditar(product) {
+        document.getElementById('editPId').value = product.id;
+        document.getElementById('editPName').value = product.name;
+        document.getElementById('editPPrice').value = product.price;
+        document.getElementById('editPCategory').value = product.category || '';
+        document.getElementById('editPStock').value = product.stock;
+        document.getElementById('editPPhoto').value = product.photoUrl || '';
+        document.getElementById('editPDescription').value = product.description || '';
+
+        document.getElementById('editProductModal').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+        document.getElementById('editProductModal').classList.add('hidden');
+        }
+
+        async function submitEditProduct() {
+        const prodId = document.getElementById('editPId').value;
+        try {
+        const getRes = await fetch(`${API_BASE}/api/Products/${prodId}`);
+        if (!getRes.ok) return;
+
+        const productObj = await getRes.json();
+
+        productObj.name = document.getElementById('editPName').value;
+        productObj.price = parseFloat(document.getElementById('editPPrice').value) || 0.0;
+        productObj.category = document.getElementById('editPCategory').value;
+        productObj.stock = parseInt(document.getElementById('editPStock').value) || 0;
+        productObj.photoUrl = document.getElementById('editPPhoto').value;
+        productObj.description = document.getElementById('editPDescription').value;
+        productObj.isAvailable = productObj.stock > 0;
+
+        const putRes = await fetch(`${API_BASE}/api/Products/${prodId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productObj)
+        });
+
+        if (putRes.ok) {
+        cerrarModalEditar();
+        loadProducts();
+        } else {
+        alert("Error al actualizar el producto.");
+        }
+        } catch (err) { console.error(err); }
+        }
+
+        async function addProduct() {
+        let finalPhoto = document.getElementById('pPhoto').value.trim();
+        if(!finalPhoto) finalPhoto = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80';
+
+        const payload = {
+        name: document.getElementById('pName').value,
+        description: document.getElementById('pDescription').value,
+        price: parseFloat(document.getElementById('pPrice').value) || 0.0,
+        stock: parseInt(document.getElementById('pStock').value) || 0,
+        restaurantId: parseInt(RESTAURANT_ID),
+        category: document.getElementById('pCategory').value,
+        isAvailable: true,
+        photoUrl: finalPhoto
+        };
+
+        const res = await fetch(`${API_BASE}/api/Products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        document.getElementById('pName').value = '';
+        document.getElementById('pPrice').value = '';
+        document.getElementById('pCategory').value = '';
+        document.getElementById('pStock').value = '';
+        document.getElementById('pPhoto').value = '';
+        document.getElementById('pDescription').value = '';
+        loadProducts();
+        }
+        }
+
+        async function loadMyReviews() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews`);
+        if (!res.ok) return;
+        const reviews = await res.json();
+        const list = document.getElementById('reviewsList');
+        list.innerHTML = '';
+
+        const myReviews = (reviews || []).filter(r => r.restaurantId == RESTAURANT_ID);
+
+        if (myReviews.length === 0) {
+        list.innerHTML = `<p class="text-sm text-[#8A8578]">Tu negocio aún no registra opiniones de clientes.</p>`;
+        return;
+        }
+
+        myReviews.forEach(r => {
+        let stars = '⭐'.repeat(r.stars || 5);
+        let nombreCliente = r.client?.name || r.clientName || 'Cliente de GoDelivery';
+
+        list.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-4 shadow-[3px_3px_0px_0px_rgba(20,18,15,1)]">
+        <div class="flex justify-between items-center mb-1">
+        <span class="text-xs font-bold text-neutral-800">${nombreCliente}</span>
+        <span class="text-xs font-mono text-amber-500">${stars}</span>
+        </div>
+        <p class="text-xs text-neutral-600 mt-1">"${r.comment || 'Sin comentarios.'}"</p>
+
+        <!-- BOTÓN NUEVO -->
+        <button onclick="openReportModal(${r.id})" class="mt-3 block text-[9px] font-bold text-red-600 border border-red-200 px-2 py-1 rounded-lg hover:bg-red-50">
+        🚩 Reportar esta reseña
+        </button>
+        </div>
+        `;
+        });
+        } catch (err) { console.error(err); }
+        }
+
+        // 🎯 LOGICA DE FILTRADO REPARADA: Sincroniza zonas horarias UTC-5 de Ecuador sin congelar los datos
+        async function calculateLocalMetrics() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/by-status/Entregado`);
+        if (!res.ok) return;
+        const completedOrders = await res.json();
+
+        const fechaDesde = document.getElementById('fDesde').value;
+        const fechaHasta = document.getElementById('fHasta').value;
+
+        const miHistorial = (completedOrders || []).filter(o => {
+        if (!o.orderDate) return false;
+
+        // Convertimos la estampa UTC de Postgres a la fecha local real de Ibarra
+        const dateNativaUTC = new Date(o.orderDate);
+        const tOffset = dateNativaUTC.getTimezoneOffset();
+        const dateLocal = new Date(dateNativaUTC.getTime() - (tOffset * 60 * 1000));
+        const orderDateStr = dateLocal.toISOString().split('T')[0];
+
+        const perteneceAlRestaurante = o.detailOrders && o.detailOrders.some(d => d.product && d.product.restaurantId == RESTAURANT_ID);
+        const estaEnRango = orderDateStr >= fechaDesde && orderDateStr <= fechaHasta;
+
+        return perteneceAlRestaurante && estaEnRango;
+        });
+
+        let ingresosTotales = 0;
+        let conteoPedidos = miHistorial.length;
+        let conteoPlatos = {};
+
+        miHistorial.forEach(o => {
+        (o.detailOrders || []).forEach(d => {
+        if (d.product && d.product.restaurantId == RESTAURANT_ID) {
+        ingresosTotales += (d.quantity * d.price);
+        conteoPlatos[d.product.name] = (conteoPlatos[d.product.name] || 0) + d.quantity;
+        }
+        });
+        });
+
+        let platoEstrella = "Ninguno en este rango";
+        let maxVendido = 0;
+        for (const plato in conteoPlatos) {
+        if (conteoPlatos[plato] > maxVendido) {
+        maxVendido = conteoPlatos[plato];
+        platoEstrella = `${plato} (${maxVendido} uds)`;
+        }
+        }
+
+        document.getElementById('mIngresos').innerText = `$${ingresosTotales.toFixed(2)}`;
+        document.getElementById('mPedidos').innerText = conteoPedidos;
+        document.getElementById('mTopProduct').innerText = platoEstrella;
+
+        } catch (err) { console.error(err); }
+        }
+
+        function downloadReport() {
+        const desde = document.getElementById('fDesde').value;
+        const hasta = document.getElementById('fHasta').value;
+        const ingresos = document.getElementById('mIngresos').innerText;
+        const pedidos = document.getElementById('mPedidos').innerText;
+        const estrella = document.getElementById('mTopProduct').innerText;
+
+        // Abrimos la nueva vista en una pestaña limpia mandando los datos dinámicos del restaurante actual
+        const urlReporte = `/Restaurant/ReporteFinanciero?resName=${encodeURIComponent(RESTAURANT_NAME)}&desde=${desde}&hasta=${hasta}&ingresos=${encodeURIComponent(ingresos)}&pedidos=${pedidos}&estrella=${encodeURIComponent(estrella)}`;
+
+        window.open(urlReporte, '_blank');
+        }
+
+        loadOrdersConsole();
+    </script>
+
+    <!-- Modal de Reporte -->
+    <div id="reportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999]">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full border-2 border-[#14120F] shadow-[8px_8px_0px_0px_rgba(20,18,15,1)]">
+            <h3 class="font-archivo text-sm mb-3">🚩 Reportar reseña</h3>
+            <input type="hidden" id="reportReviewId" />
+            <textarea id="reviewReportReason" class="w-full border-2 border-[#E4DAC4] rounded-xl p-3 text-sm outline-none focus:border-[#FF4D2E]" rows="3" placeholder="Describe el motivo del reporte..."></textarea>
+            <div class="flex gap-2 mt-4">
+                <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="flex-1 py-2 text-xs font-bold border-2 border-[#14120F] rounded-xl hover:bg-neutral-100">Cancelar</button>
+                <button onclick="submitReport()" class="flex-1 py-2 text-xs font-bold bg-[#FF4D2E] text-white rounded-xl hover:bg-[#14120F]">Enviar Reporte</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openReportModal(reviewId) {
+        document.getElementById('reportReviewId').value = reviewId;
+        document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        async function submitReport() {
+        const reviewId = document.getElementById('reportReviewId').value;
+        const reason = document.getElementById('reviewReportReason').value;
+        if (!reason) { alert("Escribe un motivo"); return; }
+
+        const res = await fetch(`${API_BASE}/api/Reviews/${reviewId}/report`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ reason: reason })
+        });
+
+        if (res.ok) {
+        alert("Reporte enviado al administrador.");
+        document.getElementById('reportModal').classList.add('hidden');
+        document.getElementById('reviewReportReason').value = '';
+        } else {
+        alert("Error al enviar reporte.");
+        }
+        }
+
+        // ---- Reportar incidente de un pedido: al Cliente o al Repartidor de esa orden ----
+        let reportableOrders = [];
+
+        async function populateReportOrders() {
+        const select = document.getElementById('reportOrderSelect');
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/by-status/Entregado`);
+        const orders = await res.json();
+        reportableOrders = (orders || []).filter(o => o.detailOrders.some(d => d.product && d.product.restaurantId == RESTAURANT_ID));
+
+        select.innerHTML = '<option value="">Selecciona orden...</option>';
+        reportableOrders.forEach(o => {
+        select.innerHTML += `<option value="${o.id}">#ORD-${o.id} · ${o.client ? o.client.name : 'Cliente'} · ${o.date || ''}</option>`;
+        });
+        } catch(e) { select.innerHTML = '<option value="">Error cargando órdenes</option>'; }
+        }
+
+        function getSelectedReportOrder() {
+        const id = parseInt(document.getElementById('reportOrderSelect').value);
+        return reportableOrders.find(o => o.id === id);
+        }
+
+        function onReportOrderSelected() {
+        const order = getSelectedReportOrder();
+        const wrapper = document.getElementById('reportTargetWrapper');
+        const deliveryLabel = document.getElementById('reportDeliveryLabel');
+
+        if (!order) {
+        wrapper.classList.add('hidden');
+        return;
+        }
+
+        wrapper.classList.remove('hidden');
+
+        // Solo mostramos la opción de repartidor si esa orden ya tuvo uno asignado
+        if (order.delivery) {
+        deliveryLabel.classList.remove('hidden');
+        deliveryLabel.classList.add('flex');
+        } else {
+        deliveryLabel.classList.add('hidden');
+        document.querySelector('input[name="reportTargetType"][value="client"]').checked = true;
+        }
+        }
+
+        async function submitEntityReport() {
+        const order = getSelectedReportOrder();
+        const reason = document.getElementById('reportReason').value;
+
+        if (!order) { alert("Selecciona una orden."); return; }
+        if (!reason) { alert("Escribe el motivo del reporte."); return; }
+
+        const type = document.querySelector('input[name="reportTargetType"]:checked').value;
+
+        const payload = {
+        sourcePersonId: parseInt(RESTAURANT_ID),
+        reason: reason,
+        clientId: type === "client" ? order.clientId : null,
+        deliveryId: type === "delivery" ? order.deliveryId : null
+        };
+
+        const res = await fetch(`${API_BASE}/api/Reports`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+        alert("Reporte enviado al administrador.");
+        location.reload();
+        } else {
+        alert("Error al enviar reporte.");
+        }
+        }
+    </script>
+</body>
+</html>

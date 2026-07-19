@@ -1,0 +1,119 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Detalle del pedido — Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Client/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏠 Inicio</a>
+                <a href="/Client/Orders" class="px-4 py-3 rounded-xl bg-[#FF4D2E] text-white font-semibold">🧾 Mis Pedidos</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
+        <a href="/Client/Orders" class="text-xs font-bold text-[#8A8578] mb-4 inline-block">← Volver a mis pedidos</a>
+
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <span class="font-mono text-xs text-[#FF4D2E] font-bold">PEDIDO #<span id="orderId">-</span></span>
+                    <h1 class="font-archivo text-xl mt-1" id="orderStatus">Cargando...</h1>
+                </div>
+                <button id="mapBtn" onclick="verMapa()" class="bg-[#14120F] text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-[#FF4D2E]">
+                    Ver en el mapa →
+                </button>
+            </div>
+
+            <div id="itemsList" class="border-t border-dashed border-[#E4DAC4] pt-4 mt-4 space-y-2"></div>
+
+            <div class="border-t-2 border-[#14120F] pt-4 mt-4 flex justify-between font-archivo text-lg">
+                <span>TOTAL</span>
+                <span id="orderTotal">$0.00</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const ORDER_ID = params.get('id');
+        const API_BASE = "https://localhost:7042";
+
+        async function loadOrder() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}`);
+        const order = await res.json();
+
+        document.getElementById('orderId').innerText = order.id;
+        document.getElementById('orderStatus').innerText = order.status;
+
+        // CORRECCIÓN: Se eliminó el "if (order.status === 'En camino')"
+        // Ahora el código de confirmación se muestra SIEMPRE desde que se crea el pedido
+        if (order.confirmationCode) {
+        // Primero limpiamos cualquier recuadro previo por si se ejecuta en bucle
+        const prevCodeBox = document.getElementById('confirmationCodeBox');
+        if (prevCodeBox) prevCodeBox.remove();
+
+        document.getElementById('orderStatus').insertAdjacentHTML('afterend', `
+        <div id="confirmationCodeBox" class="mt-3 bg-[#FBF6EC] border-2 border-dashed border-[#FF4D2E] rounded-xl p-3">
+        <p class="text-xs text-[#8A8578] font-mono">Dale este código a tu repartidor al recibir el pedido:</p>
+        <p class="font-archivo text-2xl text-[#FF4D2E] tracking-widest">${order.confirmationCode}</p>
+        </div>`);
+        }
+
+        const list = document.getElementById('itemsList');
+        list.innerHTML = '';
+        let total = 0;
+
+        (order.detailOrders || []).forEach(d => {
+        const subtotal = d.quantity * d.price;
+        total += subtotal;
+        list.innerHTML += `
+        <div class="flex justify-between text-sm">
+        <span>${d.quantity}x ${d.product ? d.product.name : 'Producto'}</span>
+        <span class="font-mono">$${subtotal.toFixed(2)}</span>
+        </div>`;
+        });
+
+        document.getElementById('orderTotal').innerText = `$${total.toFixed(2)}`;
+
+        // Solo mostrar el botón de mapa si el pedido está en camino
+        if (order.status !== "En camino") {
+        document.getElementById('mapBtn').style.display = "none";
+        } else {
+        document.getElementById('mapBtn').style.display = "block";
+        }
+        } catch (err) {
+        document.getElementById('orderStatus').innerText = "No se pudo cargar el pedido";
+        }
+        }
+
+        function verMapa() {
+        window.location.href = `/Client/Tracking?orderId=${ORDER_ID}`;
+        }
+
+        loadOrder();
+    </script>
+</body>
+</html>

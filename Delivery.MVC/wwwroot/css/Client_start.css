@@ -1,0 +1,74 @@
+﻿:root {
+    --ink: #14120F;
+    --paper: #FBF6EC;
+    --paper-dim: #EFE7D6;
+    --chile: #FF4D2E;
+    --mustard: #E8A33D;
+    --sage: #6B8F71;
+    --muted: #8A8578;
+    --card-line: #E4DAC4;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper-dim);
+    color: var(--ink);
+}
+
+.font-archivo {
+    font-family: 'Archivo Black', sans-serif;
+}
+
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Animación del blip de orden activa */
+.blip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--sage);
+    animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Estilo de la ruta animada del mini mapa */
+.ao-route path {
+    fill: none;
+    stroke: #FBF6EC;
+    stroke-opacity: .25;
+    stroke-width: 2;
+    stroke-dasharray: 1 8;
+    stroke-linecap: round;
+}
+
+    .ao-route path.p {
+        stroke: var(--chile);
+        stroke-opacity: 1;
+        stroke-dasharray: 5 7;
+        animation: dash 2s linear infinite;
+    }
+
+@keyframes dash {
+    0% {
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        stroke-dashoffset: -100;
+    }
+}

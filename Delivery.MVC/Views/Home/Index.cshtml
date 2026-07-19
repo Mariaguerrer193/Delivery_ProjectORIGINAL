@@ -1,0 +1,248 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoDeliver — Pide lo que se te antoje</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Poppins:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --chile-dark: #C6350F;
+        --mustard: #E8A33D;
+        --sage: #6B8F71;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        overflow-x: hidden;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-poppins {
+        font-family: 'Poppins', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hard-shadow {
+        box-shadow: 6px 6px 0px 0px rgba(20,18,15,1);
+        }
+
+        .hard-shadow-sm {
+        box-shadow: 4px 4px 0px 0px rgba(20,18,15,1);
+        }
+
+        .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.35;
+        z-index: 0;
+        }
+
+        /* --- Marquee (cinta de letrero) --- */
+        .marquee-track {
+        display: flex;
+        width: max-content;
+        animation: scroll-left 22s linear infinite;
+        }
+
+        @@keyframes scroll-left {
+        from {
+        transform: translateX(0);
+        }
+
+        to {
+        transform: translateX(-50%);
+        }
+        }
+
+        /* --- Stickers de fotos en el hero --- */
+        .sticker {
+        transition: transform 0.25s ease;
+        }
+
+        .sticker:hover {
+        transform: scale(1.05) rotate(0deg) !important;
+        z-index: 20;
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+        .marquee-track {
+        animation: none;
+        }
+
+        .sticker {
+        transition: none;
+        }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <header class="relative z-20 w-full bg-[#141A2D]">
+        <div class="max-w-[1400px] mx-auto px-lg-0 sm:px-20 py-6 sm:py-8 flex items-center gap-5 sm:gap-8">
+            <img src="https://i.postimg.cc/Yq0pRMbB/Screenshot-20260716-212649-3.jpg"
+                 alt="GoDeliver icono"
+                 class="h-20 sm:h-28 w-auto object-contain shrink-0" />
+            <div class="flex flex-col leading-none items-center text-center ml-[2.5cm]">
+                <span class="font-poppins font-extrabold text-9xl sm:text-10xl tracking-tight leading-none">
+                    <span class="text-[#FF824D]">Go</span><span class="text-[#F5F1E6]">deliver</span>
+                </span>
+                <span class="font-mono text-xs sm:text-sm tracking-[0.35em] mt-2 sm:mt-3">
+                    <span class="text-[#6B8B8F] font-bold">FAST.</span>
+                    <span class="text-[#F5F1E6] font-bold">EASY.</span>
+                    <span class="text-[#FF824D] font-bold">DELIVERED.</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="relative max-w-[1400px] mx-auto px-6 sm:px-10 pt-8 pb-16 overflow-hidden">
+        <div class="blob w-[420px] h-[420px] bg-[#FF4D2E] -top-24 -left-24"></div>
+        <div class="blob w-[360px] h-[360px] bg-[#E8A33D] top-10 -right-20"></div>
+        <div class="blob w-[300px] h-[300px] bg-[#6B8F71] bottom-0 left-1/3"></div>
+
+        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <div class="inline-flex items-center gap-2 bg-white border-2 border-[#14120F] rounded-full px-4 py-1.5 hard-shadow-sm font-mono text-[11px] font-bold tracking-wider mb-6">
+                    🔥 MÁS DE 20 RESTAURANTES CERCA DE TI
+                </div>
+                <h1 class="font-archivo text-4xl sm:text-6xl leading-[1.05] tracking-tight mb-6">
+                    ¿Qué se te
+                    <span class="relative inline-block">
+                        <span class="relative z-10">antoja</span>
+                        <span class="absolute inset-x-0 bottom-1 h-4 bg-[#E8A33D] -z-0"></span>
+                    </span>
+                    hoy?
+                </h1>
+                <p class="text-neutral-600 text-base sm:text-lg font-medium max-w-md mb-8">
+                    Pizza, hamburguesas, comida saludable o ese antojo de medianoche — pídelo en segundos y síguelo en el mapa hasta que toque tu puerta.
+                </p>
+                <div class="flex flex-wrap items-center gap-4">
+                    <a href="/Auth/Login" class="bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-4 px-7 rounded-2xl text-sm font-archivo tracking-wide transition-colors hard-shadow">
+                        INICIAR SESIÓN →
+                    </a>
+                    <a href="/Auth/Register" class="bg-white border-2 border-[#14120F] hover:bg-[#14120F] hover:text-white font-bold py-4 px-7 rounded-2xl text-sm font-archivo tracking-wide transition-colors">
+                        CREAR CUENTA
+                    </a>
+                </div>
+            </div>
+
+            <!-- Collage de ilustraciones GoDeliver -->
+            <div class="relative h-[400px] hidden lg:block">
+                <div class="sticker absolute top-0 right-2 w-64 h-64 rounded-3xl overflow-hidden border-4 border-white hard-shadow -rotate-3 bg-cover bg-center"
+                     style="background-image:url('https://i.postimg.cc/qM3fbqVk/file-000000000b4c720e8d58489598d2842f-2.jpg')"></div>
+                <div class="sticker absolute bottom-0 left-0 w-60 h-60 rounded-3xl overflow-hidden border-4 border-white hard-shadow rotate-6 bg-cover bg-center"
+                     style="background-image:url('https://i.postimg.cc/zfq9GkLS/file-000000000b4c720e8d58489598d2842f-3.jpg')"></div>
+                <div class="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-[#14120F] text-white rounded-2xl px-5 py-4 hard-shadow -rotate-3 z-10">
+                    <span class="block font-mono text-[10px] text-[#E8A33D] tracking-wider mb-1">ENTREGA ESTIMADA</span>
+                    <span class="font-archivo text-xl whitespace-nowrap">20–30 MIN</span>
+                </div>
+            </div>
+
+            <!-- Versión móvil de la ilustración -->
+            <div class="relative w-full h-56 rounded-3xl overflow-hidden border-4 border-white hard-shadow lg:hidden bg-cover bg-center"
+                 style="background-image:url('https://i.postimg.cc/qM3fbqVk/file-000000000b4c720e8d58489598d2842f-2.jpg')">
+                <div class="absolute bottom-3 right-3 bg-[#14120F] text-white rounded-xl px-4 py-2.5 hard-shadow-sm -rotate-2">
+                    <span class="block font-mono text-[9px] text-[#E8A33D] tracking-wider">ENTREGA ESTIMADA</span>
+                    <span class="font-archivo text-base">20–30 MIN</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARQUEE / LETRERO -->
+    <section class="border-y-2 border-[#14120F] overflow-hidden">
+        <div class="marquee-track">
+            @{
+                var items = new[] { "🍕 PIZZAS", "🍔 HAMBURGUESAS", "🥗 SALUDABLE", "🍰 POSTRES", "🍗 ALITAS", "🌮 COMIDA RÁPIDA" };
+            }
+            @for (int rep = 0; rep < 2; rep++)
+            {
+                foreach (var item in items)
+                {
+                    <span class="font-archivo text-lg sm:text-xl px-8 py-4 shrink-0 @(Array.IndexOf(items, item) % 2 == 0 ? "bg-[#FF4D2E] text-white" : "bg-[#E8A33D] text-[#14120F]")">
+                        @item
+                    </span>
+                }
+            }
+        </div>
+    </section>
+
+    <!-- ROLES -->
+    <section class="max-w-[1400px] mx-auto px-6 sm:px-10 py-20">
+        <div class="text-center mb-12">
+            <span class="font-mono text-xs tracking-[0.2em] text-[#FF4D2E] font-bold">CÓMO FUNCIONA</span>
+            <h2 class="font-archivo text-3xl sm:text-4xl mt-3">Una app, tres formas de participar</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-7 hard-shadow-sm hover:-translate-y-1 transition-transform">
+                <div class="w-12 h-12 rounded-xl bg-[#FF4D2E]/10 flex items-center justify-center text-2xl mb-4">🧑‍🍳</div>
+                <h3 class="font-archivo text-lg mb-2">Soy Cliente</h3>
+                <p class="text-sm text-neutral-600 leading-relaxed mb-4">Explora restaurantes, arma tu pedido, paga como quieras y sigue tu entrega en tiempo real.</p>
+                <a href="/Auth/Login" class="text-xs font-bold text-[#FF4D2E] hover:underline font-mono">ENTRAR →</a>
+            </div>
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-7 hard-shadow-sm hover:-translate-y-1 transition-transform">
+                <div class="w-12 h-12 rounded-xl bg-[#E8A33D]/15 flex items-center justify-center text-2xl mb-4">🍽️</div>
+                <h3 class="font-archivo text-lg mb-2">Soy Restaurante</h3>
+                <p class="text-sm text-neutral-600 leading-relaxed mb-4">Publica tu menú, recibe pedidos entrantes y gestiona tu negocio desde un solo panel.</p>
+                <a href="/Auth/Login" class="text-xs font-bold text-[#FF4D2E] hover:underline font-mono">ENTRAR →</a>
+            </div>
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-7 hard-shadow-sm hover:-translate-y-1 transition-transform">
+                <div class="w-12 h-12 rounded-xl bg-[#6B8F71]/15 flex items-center justify-center text-2xl mb-4">🛵</div>
+                <h3 class="font-archivo text-lg mb-2">Soy Repartidor</h3>
+                <p class="text-sm text-neutral-600 leading-relaxed mb-4">Recibe ofertas de entrega, acepta las que te convienen y consulta tus ganancias.</p>
+                <a href="/Auth/Login" class="text-xs font-bold text-[#FF4D2E] hover:underline font-mono">ENTRAR →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="max-w-[1400px] mx-auto px-6 sm:px-10 pb-20">
+        <div class="bg-[#14120F] text-white rounded-3xl p-10 sm:p-14 flex flex-col sm:flex-row items-center justify-between gap-8 relative overflow-hidden hard-shadow">
+            <div class="blob w-72 h-72 bg-[#FF4D2E] -bottom-20 -right-10 opacity-20"></div>
+            <div class="relative z-10 flex items-center gap-6">
+                <img src="https://i.postimg.cc/zfq9GkLS/file-000000000b4c720e8d58489598d2842f-3.jpg"
+                     alt="Entrega GoDeliver"
+                     class="hidden sm:block w-24 h-24 rounded-2xl object-cover border-4 border-white/10 shrink-0" />
+                <div>
+                    <h2 class="font-archivo text-2xl sm:text-3xl mb-2">Tu próxima comida está a un clic.</h2>
+                    <p class="text-neutral-400 text-sm font-medium">Crea tu cuenta gratis y empieza a pedir en minutos.</p>
+                </div>
+            </div>
+            <a href="/Auth/Login" class="relative z-10 bg-[#FF4D2E] text-white hover:bg-white hover:text-[#14120F] font-bold py-4 px-8 rounded-2xl text-sm font-archivo tracking-wide transition-colors shrink-0">
+                INICIAR SESIÓN →
+            </a>
+        </div>
+    </section>
+
+    <footer class="flex flex-col items-center gap-3 text-center py-8">
+        <img src="https://i.postimg.cc/FKJJ102z/file-00000000a404720e90a496b2dd7bbb8e.png"
+             alt="GoDeliver"
+             class="h-8 w-auto rounded-lg opacity-90" />
+        <span class="font-mono text-xs text-[#8A8578] tracking-wider">GODELIVER — BUSCA TUS ANTOJOS CON NOSOTROS</span>
+    </footer>
+
+</body>
+</html>

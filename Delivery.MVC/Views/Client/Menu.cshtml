@@ -1,0 +1,318 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Menú — Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Client/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏠 Inicio</a>
+                <a href="/Client/Search" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🔍 Buscar Platos</a>
+                <a href="/Client/Cart" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🛒 Mi Carrito</a>
+                <a href="/Client/Orders" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🧾 Mis Pedidos</a>
+                <a href="/Client/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Client/Coupons" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏷️ Cupones</a>
+            </nav>
+        </div>
+        <button onclick="localStorage.removeItem('userId'); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white transition-all">⚠️ CERRAR SESIÓN</button>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="font-archivo text-2xl tracking-tight" id="restaurantName">Cargando...</h1>
+                <p class="text-[#8A8578] text-sm mt-1" id="restaurantCategory"></p>
+            </div>
+            <a href="/Client/Cart" class="bg-[#14120F] text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                🛒 Ver carrito (<span id="cartCount">0</span>)
+            </a>
+        </div>
+
+        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+        <!-- RESEÑAS DEL RESTAURANTE -->
+        <div class="mt-10">
+            <h3 class="font-archivo text-lg tracking-tight mb-4">⭐ Lo que dicen los clientes</h3>
+            <div id="restaurantReviews" class="space-y-3 max-w-3xl">
+                <p class="text-sm text-[#8A8578]">Cargando reseñas...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL FLOTANTE DE RESEÑAS DE PRODUCTO (igual que en Search.cshtml) -->
+    <div id="productReviewsModal" class="fixed inset-0 bg-black/50 z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl w-full max-w-md p-6 shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center border-b-2 border-dashed border-[#E4DAC4] pb-3 mb-4 shrink-0">
+                <h3 class="font-archivo text-base truncate" id="modalProductName">Reseñas del Plato</h3>
+                <button onclick="closeProductReviewsModal()" class="text-neutral-500 hover:text-black font-archivo text-sm font-bold">✕</button>
+            </div>
+
+            <div id="modalReviewsList" class="flex-1 overflow-y-auto space-y-3 pr-1 mb-4 text-xs">
+                <p class="text-[#8A8578] font-mono">Cargando comentarios...</p>
+            </div>
+
+            <div id="modalReviewForm" class="border-t-2 border-[#14120F] pt-4 shrink-0 space-y-3">
+                <h4 class="font-archivo text-xs uppercase tracking-wider text-neutral-500">Escribe tu opinión</h4>
+                <div id="modalStarsPicker" class="flex gap-1">
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="1">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="2">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="3">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="4">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="5">★</span>
+                </div>
+                <textarea id="modalReviewComment" rows="2" placeholder="¿Qué tal estuvo el sabor y la porción?..."
+                          class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-3 py-2 text-xs font-medium outline-none resize-none"></textarea>
+                <button id="modalSubmitBtn" onclick="submitProductReview()" class="w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-xs font-archivo tracking-wide hover:bg-[#14120F] transition-colors">
+                    PUBLICAR RESEÑA DEL PLATO
+                </button>
+                <p id="modalMessage" class="text-[11px] font-mono text-center hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const RESTAURANT_ID = params.get('restaurantId');
+        const API_BASE = "https://localhost:7042";
+        const userId = localStorage.getItem('userId');
+
+        function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+        function saveCart(cart) { localStorage.setItem('cart', JSON.stringify(cart)); }
+        function updateCartCount() {
+        const cart = getCart();
+        document.getElementById('cartCount').innerText = cart.reduce((a, i) => a + i.quantity, 0);
+        }
+
+        function addToCart(id, name, price) {
+        const cart = getCart();
+        const existing = cart.find(i => i.productId === id);
+        if (existing) existing.quantity++;
+        else cart.push({ productId: id, name, price, quantity: 1, restaurantId: RESTAURANT_ID });
+        saveCart(cart);
+        updateCartCount();
+        }
+
+        // ---- Elegibilidad para reseñar productos (igual que en Search.cshtml) ----
+        let clientCompletedProducts = new Set();
+        let currentModalProductId = null;
+        let modalSelectedRating = 0;
+
+        async function cacheClientDeliveredProducts() {
+        if (!userId) return;
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/Client/${userId}`);
+        if (res.ok) {
+        const orders = await res.json();
+        orders.filter(o => o.status === "Entregado").forEach(o => {
+        if (o.products) {
+        o.products.forEach(p => clientCompletedProducts.add(p.productId));
+        }
+        });
+        }
+        } catch (err) { console.error("Error cargando elegibilidad de productos", err); }
+        }
+
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(star => {
+        star.addEventListener('click', () => {
+        modalSelectedRating = parseInt(star.dataset.value);
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(s => {
+        s.style.color = parseInt(s.dataset.value) <= modalSelectedRating ? '#E8A33D' : '#E4DAC4';
+        });
+        });
+        });
+
+        async function openProductReviewsModal(productId, productName) {
+        currentModalProductId = productId;
+        modalSelectedRating = 0;
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(s => s.style.color = '#E4DAC4');
+        document.getElementById('modalReviewComment').value = '';
+        document.getElementById('modalMessage').classList.add('hidden');
+        document.getElementById('modalProductName').innerText = productName;
+        document.getElementById('productReviewsModal').classList.remove('hidden');
+
+        if (!userId) {
+        document.getElementById('modalReviewForm').style.opacity = "0.4";
+        document.getElementById('modalReviewForm').style.pointerEvents = "none";
+        const msg = document.getElementById('modalMessage');
+        msg.innerText = "🔒 Inicia sesión para poder opinar.";
+        msg.className = "text-[11px] font-mono text-center text-red-500 block";
+        } else if (!clientCompletedProducts.has(productId)) {
+        document.getElementById('modalReviewForm').style.opacity = "0.4";
+        document.getElementById('modalReviewForm').style.pointerEvents = "none";
+        const msg = document.getElementById('modalMessage');
+        msg.innerText = "🔒 Solo puedes opinar si ya compraste este plato.";
+        msg.className = "text-[11px] font-mono text-center text-red-500 block";
+        } else {
+        document.getElementById('modalReviewForm').style.opacity = "1";
+        document.getElementById('modalReviewForm').style.pointerEvents = "auto";
+        }
+
+        const list = document.getElementById('modalReviewsList');
+        list.innerHTML = '<p class="text-[#8A8578] font-mono">Cargando...</p>';
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews/product/${productId}`);
+        const reviews = await res.json();
+        list.innerHTML = '';
+
+        if (!reviews || reviews.length === 0) {
+        list.innerHTML = '<p class="text-[#8A8578] font-mono text-center py-4">Este plato aún no tiene calificaciones.</p>';
+        return;
+        }
+
+        reviews.forEach(r => {
+        let stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+        list.innerHTML += `
+        <div class="bg-[#FBF6EC] border border-[#E4DAC4] rounded-xl p-3 shadow-sm">
+        <div class="flex justify-between font-bold mb-1">
+        <span>${r.client ? r.client.name : 'Cliente'}</span>
+        <span class="text-[#E8A33D] font-mono">${stars}</span>
+        </div>
+        <p class="text-neutral-600 leading-tight">${r.comment || ''}</p>
+        </div>`;
+        });
+        } catch (err) {
+        list.innerHTML = '<p class="text-red-500 font-mono">Error al cargar opiniones.</p>';
+        }
+        }
+
+        function closeProductReviewsModal() {
+        document.getElementById('productReviewsModal').classList.add('hidden');
+        }
+
+        async function submitProductReview() {
+        if (!userId) { alert("Inicia sesión para poder opinar."); return; }
+        if (modalSelectedRating === 0) { alert("Elige una calificación."); return; }
+        const comment = document.getElementById('modalReviewComment').value.trim();
+        if (!comment) { alert("Escribe un comentario."); return; }
+
+        const payload = {
+        clientId: parseInt(userId),
+        rating: modalSelectedRating,
+        comment: comment,
+        productId: currentModalProductId
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        alert("¡Reseña de producto añadida con éxito!");
+        openProductReviewsModal(currentModalProductId, document.getElementById('modalProductName').innerText);
+        } else {
+        alert("Error al enviar: " + await res.text());
+        }
+        } catch (err) { alert("Error de conexión con la API."); }
+        }
+
+        async function loadMenu() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Restaurants/${RESTAURANT_ID}/menu`);
+        const data = await res.json();
+
+        document.getElementById('restaurantName').innerText = data.restaurant || "Restaurante";
+
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = '';
+
+        if (!data.products || data.products.length === 0) {
+        grid.innerHTML = `<p class="text-sm text-[#8A8578] col-span-full">Este restaurante aún no tiene productos disponibles.</p>`;
+        return;
+        }
+
+        data.products.forEach(p => {
+        const img = p.photoUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';
+
+        grid.innerHTML += `
+        <div class="bg-white border-2 border-[#E4DAC4] rounded-2xl overflow-hidden flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+        <div class="h-36 bg-cover bg-center" style="background-image: url('${img}')"></div>
+        <div class="p-4 flex flex-col justify-between flex-1">
+        <div>
+        <div class="flex justify-between items-start gap-2 mb-2">
+        <h4 class="font-archivo text-base">${p.name}</h4>
+        <span class="font-mono text-sm font-bold text-[#FF4D2E]">$${p.price.toFixed(2)}</span>
+        </div>
+        <p class="text-xs text-[#8A8578] mb-4">${p.description || ''}</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+        <button onclick='openProductReviewsModal(${p.id}, ${JSON.stringify(p.name)})' class="bg-[#14120F] text-white hover:bg-neutral-800 font-bold py-2 rounded-xl text-[11px] font-mono tracking-tight transition-colors">
+        ⭐ Reseñas
+        </button>
+        <button onclick='addToCart(${p.id}, ${JSON.stringify(p.name)}, ${p.price})' class="col-span-2 bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-2 rounded-xl text-[11px] font-mono tracking-wide transition-colors">
+        + AGREGAR
+        </button>
+        </div>
+        </div>
+        </div>`;
+        });
+        } catch (err) {
+        console.error(err);
+        document.getElementById('restaurantName').innerText = "No se pudo cargar el restaurante";
+        }
+        }
+
+        async function loadRestaurantReviews() {
+        const container = document.getElementById('restaurantReviews');
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews/restaurant/${RESTAURANT_ID}`);
+        const reviews = await res.json();
+        container.innerHTML = '';
+
+        if (!reviews || reviews.length === 0) {
+        container.innerHTML = `<p class="text-sm text-[#8A8578]">Este restaurante todavía no tiene reseñas.</p>`;
+        return;
+        }
+
+        reviews.forEach(r => {
+        const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+        const clientName = r.client ? r.client.name : "Cliente";
+        container.innerHTML += `
+        <div class="bg-white border-2 border-[#E4DAC4] rounded-2xl p-4 shadow-[3px_3px_0px_0px_rgba(20,18,15,1)]">
+        <div class="flex justify-between items-start mb-1">
+        <span class="font-bold text-sm">${clientName}</span>
+        <span class="font-mono text-sm text-[#E8A33D] font-bold">${stars}</span>
+        </div>
+        <p class="text-xs text-neutral-600 mt-1">${r.comment || ''}</p>
+        ${r.photoUrl ? `<img src="${r.photoUrl}" class="w-20 h-20 object-cover rounded-lg mt-2 border border-[#E4DAC4]" />` : ''}
+        </div>`;
+        });
+        } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-sm text-[#8A8578]">No se pudieron cargar las reseñas.</p>`;
+        }
+        }
+
+        updateCartCount();
+        cacheClientDeliveredProducts();
+        loadMenu();
+        loadRestaurantReviews();
+    </script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Cupones — GoDelivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- NAV LATERAL CONECTADA -->
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · ADMIN</div>
+            <div class="flex flex-col gap-1 text-sm font-medium">
+                <button onclick="showTab('dashboard')" class="tab-btn active px-4 py-3 rounded-xl text-left" data-tab="dashboard">📊 Dashboard Global</button>
+                <button onclick="showTab('cuentas')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="cuentas">👤 Contratar Personal</button>
+                <a href="/Admin/CouponManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">🏷️ Cupones</a>
+                <a href="/Admin/ReviewModeration" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">⭐ Moderar Reseñas</a>
+                <a href="/Admin/ReportManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">🚨 Reportes Formales</a>
+                <a href="/Admin/UserManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">👥 Control de Usuarios</a>
+            </div>
+        </div>
+        <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white">⚠️ CERRAR SESIÓN</button>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+        <h1 class="font-archivo text-2xl mb-6">Administración de Cupones</h1>
+
+        <!-- FORMULARIO AUTOMATIZADO -->
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-2xl mb-8 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+            <h3 class="font-archivo text-xs uppercase tracking-wider text-neutral-400 mb-4">+ Crear Nuevo Cupón de Descuento</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- SELECTOR DE TIPO -->
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Tipo de Descuento:</label>
+                    <select id="cIsPercentage" onchange="updateValueLabel()" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E] bg-white">
+                        <option value="true">Porcentaje (%)</option>
+                        <option value="false">Monto fijo ($)</option>
+                    </select>
+                </div>
+
+                <!-- VALOR DINÁMICO (SOPORTA DECIMALES Y BLOQUEA NEGATIVOS) -->
+                <div>
+                    <label id="valueLabel" class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Valor de la Rebaja (En %):</label>
+                    <div class="relative">
+                        <input id="cValue" type="number" step="0.01" min="0" placeholder="Ej: 10.50" class="w-full border-2 border-[#E4DAC4] rounded-xl pl-3 pr-8 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                        <span id="valueSymbol" class="absolute right-3 top-2.5 text-xs font-mono font-bold text-neutral-400">%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Fecha de Expiración:</label>
+                    <input id="cExpiration" type="date" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Límite de Canjes Permitidos:</label>
+                    <input id="cUsageLimit" type="number" min="1" placeholder="Ej: 100 (Vacío = ilimitado)" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Descripción del Beneficio:</label>
+                    <input id="cDescription" placeholder="Ej: Descuento automático de bienvenida." class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+            </div>
+            <button onclick="createCoupon()" class="mt-4 w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-sm transition-colors hover:bg-neutral-900">Publicar y Autogenerar Cupón</button>
+        </div>
+
+        <!-- REGISTRO HISTÓRICO -->
+        <h3 class="font-archivo text-xs uppercase tracking-wider text-neutral-400 mb-4">🏷️ Listado de Cupones Emitidos</h3>
+        <div id="couponsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-5xl"></div>
+    </main>
+
+    <!-- 🎯 VENTANA MODAL PARA EDITAR CUPÓN EXISTENTE -->
+    <div id="editCouponModal" class="hidden fixed inset-0 bg-black/60 z-[5000] flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-xl w-full shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col">
+            <h3 class="font-archivo text-base mb-4 text-black">✏️ Modificar Parámetros del Cupón</h3>
+
+            <input type="hidden" id="editCId" />
+            <input type="hidden" id="editCCode" />
+            <input type="hidden" id="editCTimesUsed" />
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Tipo de Descuento:</label>
+                    <select id="editCIsPercentage" onchange="updateEditValueLabel()" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E] bg-white">
+                        <option value="true">Porcentaje (%)</option>
+                        <option value="false">Monto fijo ($)</option>
+                    </select>
+                </div>
+                <div>
+                    <label id="editValueLabel" class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Valor de la Rebaja:</label>
+                    <div class="relative">
+                        <input id="editCValue" type="number" step="0.01" min="0" class="w-full border-2 border-[#E4DAC4] rounded-xl pl-3 pr-8 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                        <span id="editValueSymbol" class="absolute right-3 top-2.5 text-xs font-mono font-bold text-neutral-400">%</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Fecha de Expiración:</label>
+                    <input id="editCExpiration" type="date" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Límite de Canjes:</label>
+                    <input id="editCUsageLimit" type="number" min="1" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase mb-1 text-neutral-500">Descripción del Beneficio:</label>
+                    <input id="editCDescription" class="w-full border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-5">
+                <button type="button" onclick="closeEditModal()" class="flex-1 bg-white border-2 border-[#14120F] py-2.5 rounded-xl text-xs font-bold text-black hover:bg-neutral-50 transition-all">Cancelar</button>
+                <button type="button" onclick="submitEditCoupon()" class="flex-1 bg-[#FF4D2E] text-white py-2.5 rounded-xl text-xs font-bold hover:bg-[#14120F] transition-all">Actualizar Cupón</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+
+        function updateValueLabel() {
+        const isPercentage = document.getElementById('cIsPercentage').value === 'true';
+        const label = document.getElementById('valueLabel');
+        const symbol = document.getElementById('valueSymbol');
+        const input = document.getElementById('cValue');
+
+        if (isPercentage) {
+        label.innerText = "Valor de la Rebaja (En %):";
+        symbol.innerText = "%";
+        input.placeholder = "Ej: 10.50";
+        } else {
+        label.innerText = "Valor de la Rebaja (En USD $):";
+        symbol.innerText = "$";
+        input.placeholder = "Ej: 5.25";
+        }
+        }
+
+        function updateEditValueLabel() {
+        const isPercentage = document.getElementById('editCIsPercentage').value === 'true';
+        document.getElementById('editValueLabel').innerText = isPercentage ? "Valor de la Rebaja (En %):" : "Valor de la Rebaja (En USD $):";
+        document.getElementById('editValueSymbol').innerText = isPercentage ? "%" : "$";
+        }
+
+        async function loadCoupons() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Coupons`);
+        if (!res.ok) return;
+        const coupons = await res.json();
+        const list = document.getElementById('couponsList');
+        list.innerHTML = '';
+
+        coupons.forEach(c => {
+        const tipoDescuento = c.isPercentage ? `${c.value}%` : `$${c.value.toFixed(2)}`;
+        const limiteInfo = c.usageLimit ? `${c.timesUsed} / ${c.usageLimit} canjes` : `${c.timesUsed} canjes (Ilimitado)`;
+        const expDate = c.expirationDate ? c.expirationDate.split('T')[0] : 'Sin fecha';
+
+        list.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 flex flex-col justify-between shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+        <div class="flex justify-between items-start mb-2">
+        <div>
+        <span class="font-mono text-base font-bold bg-neutral-900 text-[#FBF6EC] px-3 py-1 rounded-xl border border-black tracking-widest select-all">${c.code}</span>
+        <p class="text-xs text-[#8A8578] font-mono mt-3">${tipoDescuento} de rebaja</p>
+        </div>
+        <span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${c.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-neutral-100 text-neutral-400 border-neutral-300'}">
+        ${c.isActive ? 'ACTIVO' : 'INACTIVO'}
+        </span>
+        </div>
+
+        <p class="text-xs text-neutral-500 line-clamp-1 mb-3">"${c.description || 'Sin descripción.'}"</p>
+
+        <div class="flex justify-between items-center pt-3 border-t border-dashed border-neutral-200 text-[11px] font-mono text-neutral-600 mb-4">
+        <span>📊 Uso: ${limiteInfo}</span>
+        <span>📅 Expira: ${expDate}</span>
+        </div>
+
+        <!-- BOTONERA ACCIONES LIMPIAS -->
+        <div class="flex gap-2">
+        <button onclick="openEditModal(${JSON.stringify(c).replace(/"/g, '&quot;')})" class="flex-1 text-xs font-bold border-2 border-black py-1.5 rounded-xl bg-white hover:bg-neutral-100 transition-colors">
+        ✏️ Editar Parámetros
+        </button>
+        <button onclick="toggleCouponState(${c.id}, ${c.isActive})" class="flex-1 text-xs font-bold border-2 border-black py-1.5 rounded-xl text-white transition-colors ${c.isActive ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-600 hover:bg-emerald-700'}">
+        ${c.isActive ? '⛔ Desactivar Cupón' : '⚡ Activar Cupón'}
+        </button>
+        </div>
+        </div>`;
+        });
+        } catch (err) { console.error(err); }
+        }
+
+        async function createCoupon() {
+        const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let codigoGenerado = 'GD';
+        for (let i = 0; i < 6; i++) {
+        codigoGenerado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+        }
+
+        const limitVal = document.getElementById('cUsageLimit').value.trim();
+        const payload = {
+        code: codigoGenerado,
+        description: document.getElementById('cDescription').value,
+        isPercentage: document.getElementById('cIsPercentage').value === 'true',
+        value: parseFloat(document.getElementById('cValue').value) || 0.0,
+        expirationDate: document.getElementById('cExpiration').value,
+        usageLimit: limitVal !== "" ? parseInt(limitVal) : null,
+        timesUsed: 0,
+        isActive: true
+        };
+
+        const res = await fetch(`${API_BASE}/api/Coupons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        document.getElementById('cValue').value = '';
+        document.getElementById('cUsageLimit').value = '';
+        document.getElementById('cDescription').value = '';
+        document.getElementById('cIsPercentage').value = 'true';
+        updateValueLabel();
+        loadCoupons();
+        } else {
+        alert("Error al emitir cupón: " + await res.text());
+        }
+        }
+
+        function openEditModal(coupon) {
+        document.getElementById('editCId').value = coupon.id;
+        document.getElementById('editCCode').value = coupon.code;
+        document.getElementById('editCTimesUsed').value = coupon.timesUsed;
+        document.getElementById('editCIsPercentage').value = coupon.isPercentage.toString();
+        document.getElementById('editCValue').value = coupon.value;
+        document.getElementById('editCExpiration').value = coupon.expirationDate ? coupon.expirationDate.split('T')[0] : '';
+        document.getElementById('editCUsageLimit').value = coupon.usageLimit || '';
+        document.getElementById('editCDescription').value = coupon.description || '';
+
+        updateEditValueLabel();
+        document.getElementById('editCouponModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+        document.getElementById('editCouponModal').classList.add('hidden');
+        }
+
+        async function submitEditCoupon() {
+        const id = document.getElementById('editCId').value;
+        const limitVal = document.getElementById('editCUsageLimit').value.trim();
+
+        const payload = {
+        id: parseInt(id),
+        code: document.getElementById('editCCode').value,
+        timesUsed: parseInt(document.getElementById('editCTimesUsed').value) || 0,
+        isPercentage: document.getElementById('editCIsPercentage').value === 'true',
+        value: parseFloat(document.getElementById('editCValue').value) || 0.0,
+        expirationDate: document.getElementById('editCExpiration').value,
+        usageLimit: limitVal !== "" ? parseInt(limitVal) : null,
+        description: document.getElementById('editCDescription').value, // 🎯 Propiedad agregada
+        isActive: true
+        };
+
+        const res = await fetch(`${API_BASE}/api/Coupons/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        closeEditModal();
+        loadCoupons();
+        } else {
+        alert("Error al actualizar los datos del cupón: " + await res.text());
+        }
+        }
+
+        async function toggleCouponState(id, currentStatus) {
+        try {
+        const getRes = await fetch(`${API_BASE}/api/Coupons/${id}`);
+        if (getRes.ok) {
+        const couponObj = await getRes.json();
+        couponObj.isActive = !currentStatus;
+
+        const putRes = await fetch(`${API_BASE}/api/Coupons/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(couponObj)
+        });
+        if (putRes.ok) loadCoupons();
+        }
+        } catch (err) { console.error(err); }
+        }
+
+        loadCoupons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Delivery.API.Consumer/Delivery.API.Consumer.csproj" Id="b93b2ec6-c681-411b-9297-e3d9ca90e985" />
+  <Project Path="Delivery.API/Delivery.API.csproj" />
+  <Project Path="Delivery.MVC/Delivery.MVC.csproj" Id="fb2faa1a-f7a8-482f-a242-7e360a9b3349" />
+  <Project Path="Delivery_Models/Delivery_Models.csproj" />
+</Solution>

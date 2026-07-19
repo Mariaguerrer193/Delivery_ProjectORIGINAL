@@ -1,0 +1,613 @@
+﻿@*
+    Vista de Reseñas para Clientes - crear + buscar reseñas + reportes cruzados
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis Reseñas — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+
+        .star {
+        cursor: pointer;
+        font-size: 28px;
+        color: #E4DAC4;
+        transition: color 0.1s;
+        }
+
+        .star.active {
+        color: #E8A33D;
+        }
+
+        .tab-btn.active {
+        background: #14120F;
+        color: white;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-[240px] bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between sticky top-0 h-screen shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-[0.12em] flex items-center gap-2 mb-8 px-2 font-bold">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#FF4D2E] shadow-[0_0_0_4px_rgba(255,77,46,0.2)]"></span>
+                DELIVERY
+            </div>
+
+            <nav class="flex flex-col gap-1">
+                <a href="/Client/Start" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏠</span> Inicio</a>
+                <a href="/Client/Search" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🔍</span> Buscar Platos</a>
+                <a href="/Client/Cart" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🛒</span> Mi Carrito</a>
+                <a href="/Client/Orders" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🧾</span> Mis Pedidos</a>
+                <a href="/Client/Reviews" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-neutral-900 text-white"><span>⭐</span> Reseñas</a>
+                <a href="/Client/Coupons" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏷️</span> Cupones</a>
+            </nav>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-4 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-[#E8A33D] flex items-center justify-center font-bold text-[#14120F] text-sm font-archivo" id="avatarCircle">U</div>
+                <div class="text-xs">
+                    <b class="block text-sm font-semibold text-white" id="clientName">Usuario</b>
+                    <span class="text-[#8A8578] font-mono">CLIENTE</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full text-center text-xs bg-neutral-900 hover:bg-red-600 hover:text-white font-bold py-2 rounded-lg transition-all font-mono">
+                CERRAR SESIÓN
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#FBF6EC]">
+        <header class="h-20 border-b-2 border-[#E4DAC4] px-8 flex items-center bg-white shrink-0">
+            <h1 class="font-archivo text-xl tracking-tight">Calificaciones y Reseñas</h1>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6">
+
+            <!-- TABS -->
+            <div class="flex gap-2 max-w-3xl">
+                <button onclick="showTab('crear')" class="tab-btn active px-4 py-2 rounded-xl text-sm font-bold border-2 border-[#14120F]" data-tab="crear">✍️ Escribir reseña</button>
+                <button onclick="showTab('buscar')" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold border-2 border-[#E4DAC4]" data-tab="buscar">🔍 Ver reseñas</button>
+                <button onclick="showTab('reportar')" class="tab-btn px-4 py-2 rounded-xl text-sm font-bold border-2 border-[#E4DAC4]" data-tab="reportar">🚩 Reportar</button>
+            </div>
+
+            <!-- TAB: CREAR RESEÑA -->
+            <div id="tab-crear">
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] max-w-3xl">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">✍️ Escribe una reseña</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Selecciona un pedido entregado</label>
+                            <select id="orderSelect" onchange="onOrderSelected()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none">
+                                <option value="">Cargando pedidos...</option>
+                            </select>
+                        </div>
+
+                        <div id="targetTypeWrapper" class="hidden">
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿Qué quieres calificar?</label>
+                            <div class="flex gap-3">
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" name="targetType" value="restaurant" checked onchange="updateTargetLabel()" /> 🍽️ Restaurante
+                                </label>
+                                <label id="deliveryOptionLabel" class="hidden items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" name="targetType" value="delivery" onchange="updateTargetLabel()" /> 🛵 Repartidor
+                                </label>
+                            </div>
+                            <p class="text-xs text-[#8A8578] font-mono mt-2" id="targetLabel"></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Calificación</label>
+                            <div id="starsPicker" class="flex gap-1">
+                                <span class="star" data-value="1">★</span>
+                                <span class="star" data-value="2">★</span>
+                                <span class="star" data-value="3">★</span>
+                                <span class="star" data-value="4">★</span>
+                                <span class="star" data-value="5">★</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Comentario</label>
+                            <textarea id="reviewComment" rows="3" placeholder="Cuéntanos cómo fue tu experiencia..."
+                                      class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">URL de foto (opcional)</label>
+                            <input type="text" id="reviewPhoto" placeholder="https://..."
+                                   class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                        </div>
+
+                        <button onclick="submitReview()" class="w-full bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-3 rounded-xl text-sm font-archivo tracking-wide transition-all">
+                            PUBLICAR RESEÑA
+                        </button>
+                        <span id="formMessage" class="text-xs font-medium block hidden"></span>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-3">Tus reseñas publicadas</h3>
+                    <div class="max-w-3xl space-y-4" id="reviewsContainer"></div>
+                </div>
+            </div>
+
+            <!-- TAB: BUSCAR / VER RESEÑAS -->
+            <div id="tab-buscar" class="hidden">
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] max-w-3xl">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">🔍 Consultar reseñas</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿De qué quieres ver reseñas?</label>
+                            <div class="flex gap-3">
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" name="searchType" value="restaurant" checked onchange="onSearchTypeChanged()" /> 🍽️ Restaurante
+                                </label>
+                                <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" name="searchType" value="delivery" onchange="onSearchTypeChanged()" /> 🛵 Repartidor
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]" id="searchSelectLabel">Selecciona un restaurante</label>
+                            <select id="searchSelect" onchange="searchReviews()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none">
+                                <option value="">Cargando opciones...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 max-w-3xl space-y-3" id="searchResultsContainer"></div>
+            </div>
+
+            <!-- TAB: GENERAR REPORTE O QUEJA -->
+            <div id="tab-reportar" class="hidden">
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] max-w-3xl">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">🚩 Reportar una Entidad (Historial de Órdenes)</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Selecciona un pedido que respalde tu queja</label>
+                            <select id="reportOrderSelect" onchange="onReportOrderSelected()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none">
+                                <option value="">Cargando órdenes...</option>
+                            </select>
+                        </div>
+
+                        <div id="reportTargetWrapper" class="hidden">
+                            <label class="block text-xs font-bold uppercase mb-2 text-[#6b6455]">¿A quién deseas reportar en este pedido?</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="reportOptionsContainer"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Motivo o Razón del reporte</label>
+                            <textarea id="reportReason" rows="4" placeholder="Describe a detalle los inconvenientes sufridos con el plato, el restaurante o la conducta del repartidor..."
+                                      class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none resize-none"></textarea>
+                        </div>
+
+                        <button onclick="submitEntityReport()" class="w-full bg-[#14120F] text-white hover:bg-red-600 font-bold py-3 rounded-xl text-sm font-archivo tracking-wide transition-all">
+                            ENVIAR REPORTE FORMAL
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userName');
+        const userRole = localStorage.getItem('userRole');
+
+        if (!userId || userRole !== 'Client') {
+        window.location.href = '/Auth/Login';
+        } else {
+        document.getElementById('clientName').innerText = userName;
+        document.getElementById('avatarCircle').innerText = userName.substring(0, 2).toUpperCase();
+        }
+
+        function logout() {
+        localStorage.clear();
+        window.location.href = '/Auth/Login';
+        }
+
+        function showTab(tab) {
+        document.getElementById('tab-crear').classList.add('hidden');
+        document.getElementById('tab-buscar').classList.add('hidden');
+        document.getElementById('tab-reportar').classList.add('hidden');
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+
+        document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.remove('border-[#14120F]');
+        b.classList.add('border-[#E4DAC4]');
+        });
+        const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+        activeBtn.classList.add('active');
+        activeBtn.classList.remove('border-[#E4DAC4]');
+        activeBtn.classList.add('border-[#14120F]');
+
+        if (tab === 'buscar') loadSearchOptions();
+        if (tab === 'reportar') populateReportOrders();
+        }
+
+        let deliveredOrders = [];
+        let selectedRating = 0;
+
+        // ---- Estrellas clicables ----
+        document.querySelectorAll('#starsPicker .star').forEach(star => {
+        star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.value);
+        document.querySelectorAll('#starsPicker .star').forEach(s => {
+        s.classList.toggle('active', parseInt(s.dataset.value) <= selectedRating);
+        });
+        });
+        });
+
+        // ---- Cargar pedidos entregados del cliente ----
+        async function loadDeliveredOrders() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/Client/${userId}`);
+        const orders = await res.json();
+        deliveredOrders = (orders || []).filter(o => o.status === "Entregado");
+
+        const select = document.getElementById('orderSelect');
+        select.innerHTML = '';
+
+        if (deliveredOrders.length === 0) {
+        select.innerHTML = `<option value="">Aún no tienes pedidos entregados para calificar</option>`;
+        return;
+        }
+
+        select.innerHTML = `<option value="">Selecciona un pedido...</option>`;
+        deliveredOrders.forEach(o => {
+        select.innerHTML += `<option value="${o.id}">#ORD-${o.id} · ${o.restaurantName} · ${o.date}</option>`;
+        });
+        } catch (err) {
+        console.error(err);
+        document.getElementById('orderSelect').innerHTML = `<option value="">Error al cargar tus pedidos</option>`;
+        }
+        }
+
+        function getSelectedOrder() {
+        const id = parseInt(document.getElementById('orderSelect').value);
+        return deliveredOrders.find(o => o.id === id);
+        }
+
+        function onOrderSelected() {
+        const order = getSelectedOrder();
+        const wrapper = document.getElementById('targetTypeWrapper');
+        const deliveryLabel = document.getElementById('deliveryOptionLabel');
+
+        if (!order) {
+        wrapper.classList.add('hidden');
+        return;
+        }
+
+        wrapper.classList.remove('hidden');
+
+        if (order.deliveryId) {
+        deliveryLabel.classList.remove('hidden');
+        deliveryLabel.classList.add('flex');
+        } else {
+        deliveryLabel.classList.add('hidden');
+        document.querySelector('input[name="targetType"][value="restaurant"]').checked = true;
+        }
+
+        updateTargetLabel();
+        }
+
+        function updateTargetLabel() {
+        const order = getSelectedOrder();
+        if (!order) return;
+        const type = document.querySelector('input[name="targetType"]:checked').value;
+        const label = document.getElementById('targetLabel');
+        if (type === "restaurant") {
+        label.innerText = `Vas a calificar a: ${order.restaurantName}`;
+        } else {
+        label.innerText = `Vas a calificar a: ${order.deliveryName || 'Repartidor'}`;
+        }
+        }
+
+        // ---- Enviar reseña ----
+        async function submitReview() {
+        const order = getSelectedOrder();
+
+        if (!order) {
+        showMessage("Selecciona un pedido para calificar.", true);
+        return;
+        }
+        if (selectedRating === 0) {
+        showMessage("Selecciona una calificación en estrellas.", true);
+        return;
+        }
+        const comment = document.getElementById('reviewComment').value.trim();
+        if (!comment) {
+        showMessage("Escribe un comentario.", true);
+        return;
+        }
+
+        const type = document.querySelector('input[name="targetType"]:checked').value;
+        const photoUrl = document.getElementById('reviewPhoto').value.trim();
+
+        const payload = {
+        clientId: parseInt(userId),
+        rating: selectedRating,
+        comment: comment,
+        photoUrl: photoUrl || null,
+        restaurantId: type === "restaurant" ? order.restaurantId : null,
+        deliveryId: type === "delivery" ? order.deliveryId : null
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        showMessage("¡Reseña publicada con éxito!", false);
+        document.getElementById('reviewComment').value = '';
+        document.getElementById('reviewPhoto').value = '';
+        selectedRating = 0;
+        document.querySelectorAll('#starsPicker .star').forEach(s => s.classList.remove('active'));
+        document.getElementById('orderSelect').value = '';
+        document.getElementById('targetTypeWrapper').classList.add('hidden');
+        loadReviews();
+        } else {
+        const errorText = await res.text();
+        showMessage("Error al publicar: " + errorText, true);
+        }
+        } catch (err) {
+        showMessage("No se pudo conectar con el servidor.", true);
+        }
+        }
+
+        function showMessage(text, isError) {
+        const msg = document.getElementById('formMessage');
+        msg.innerText = text;
+        msg.className = "text-xs font-medium block " + (isError ? "text-red-500" : "text-emerald-600");
+        }
+
+        // ---- Cargar reseñas ya publicadas (de este cliente) ----
+        async function loadReviews() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews`);
+        const allReviews = await res.json();
+        const myReviews = (allReviews || []).filter(r => r.clientId == userId);
+        renderReviews(myReviews, 'reviewsContainer', "Aún no has publicado ninguna reseña.");
+        } catch (err) {
+        console.error(err);
+        document.getElementById('reviewsContainer').innerHTML = `<p class="text-sm text-[#8A8578] font-mono">No se pudieron cargar tus reseñas.</p>`;
+        }
+        }
+
+        function renderReviews(reviews, containerId, emptyMessage, showTargetLabel) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        if (reviews.length === 0) {
+        container.innerHTML = `<p class="text-sm text-[#8A8578] font-mono">${emptyMessage}</p>`;
+        return;
+        }
+
+        reviews.forEach(r => {
+        let stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+        const clientName = r.client ? r.client.name : "Cliente";
+        let target = "Restaurante";
+        if(r.deliveryId) target = "Repartidor";
+        if(r.productId) target = "Producto";
+
+        container.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+        <div class="flex justify-between items-start mb-2">
+        <div>
+        <h4 class="font-archivo text-base text-[#14120F]">${showTargetLabel ? clientName : target}</h4>
+        </div>
+        <span class="font-mono text-sm text-[#E8A33D] font-bold bg-[#FBF6EC] px-2 py-0.5 rounded border border-[#E4DAC4] tracking-wider">${stars}</span>
+        </div>
+        <p class="text-xs text-neutral-600 font-medium leading-relaxed mt-2">${r.comment || ''}</p>
+        ${r.photoUrl ? `<img src="${r.photoUrl}" class="w-24 h-24 object-cover rounded-lg mt-3 border border-[#E4DAC4]" />` : ''}
+        </div>
+        `;
+        });
+        }
+
+        // ================= TAB BUSCAR =================
+        let restaurantsList = [];
+        let deliveriesList = [];
+        let searchOptionsLoaded = false;
+
+        async function loadSearchOptions() {
+        if (searchOptionsLoaded) return;
+        try {
+        const [resRest, resDeliv] = await Promise.all([
+        fetch(`${API_BASE}/api/Restaurants`),
+        fetch(`${API_BASE}/api/Deliveries`)
+        ]);
+        restaurantsList = resRest.ok ? await resRest.json() : [];
+        deliveriesList = resDeliv.ok ? await resDeliv.json() : [];
+        searchOptionsLoaded = true;
+        populateSearchSelect();
+        } catch (err) {
+        console.error(err);
+        document.getElementById('searchSelect').innerHTML = `<option value="">Error al cargar opciones</option>`;
+        }
+        }
+
+        function onSearchTypeChanged() {
+        const type = document.querySelector('input[name="searchType"]:checked').value;
+        document.getElementById('searchSelectLabel').innerText = type === "restaurant" ? "Selecciona un restaurante" : "Selecciona un repartidor";
+        populateSearchSelect();
+        }
+
+        function populateSearchSelect() {
+        const type = document.querySelector('input[name="searchType"]:checked').value;
+        const select = document.getElementById('searchSelect');
+        select.innerHTML = `<option value="">Selecciona...</option>`;
+
+        if (type === "restaurant") {
+        restaurantsList.forEach(r => {
+        select.innerHTML += `<option value="${r.id}">${r.commercialName || r.name}</option>`;
+        });
+        } else {
+        deliveriesList.forEach(d => {
+        select.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+        });
+        }
+
+        document.getElementById('searchResultsContainer').innerHTML = '';
+        }
+
+        async function searchReviews() {
+        const type = document.querySelector('input[name="searchType"]:checked').value;
+        const id = document.getElementById('searchSelect').value;
+        const container = document.getElementById('searchResultsContainer');
+
+        if (!id) {
+        container.innerHTML = '';
+        return;
+        }
+
+        container.innerHTML = `<p class="text-sm text-[#8A8578]">Cargando reseñas...</p>`;
+
+        try {
+        const endpoint = type === "restaurant"
+        ? `${API_BASE}/api/Reviews/restaurant/${id}`
+        : `${API_BASE}/api/Reviews/delivery/${id}`;
+
+        const res = await fetch(endpoint);
+        const reviews = await res.json();
+        renderReviews(reviews || [], 'searchResultsContainer', "Todavía no hay reseñas para esta opción.", true);
+        } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p class="text-sm text-[#8A8578]">No se pudieron cargar las reseñas.</p>`;
+        }
+        }
+
+        // ---- REPORTE DE INCIDENTES ----
+        function populateReportOrders() {
+        const select = document.getElementById('reportOrderSelect');
+        select.innerHTML = '';
+
+        if (deliveredOrders.length === 0) {
+        select.innerHTML = `<option value="">No posees órdenes completadas para reportar.</option>`;
+        return;
+        }
+
+        select.innerHTML = `<option value="">Selecciona la orden del incidente...</option>`;
+        deliveredOrders.forEach(o => {
+        select.innerHTML += `<option value="${o.id}">#ORD-${o.id} · ${o.restaurantName}</option>`;
+        });
+        }
+
+        function onReportOrderSelected() {
+        const id = parseInt(document.getElementById('reportOrderSelect').value);
+        const order = deliveredOrders.find(o => o.id === id);
+        const wrapper = document.getElementById('reportTargetWrapper');
+        const container = document.getElementById('reportOptionsContainer');
+
+        if (!order) { wrapper.classList.add('hidden'); return; }
+        wrapper.classList.remove('hidden');
+        container.innerHTML = '';
+
+        container.innerHTML += `
+        <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl p-3 cursor-pointer text-xs font-semibold bg-white">
+        <input type="radio" name="reportTarget" value="restaurant" data-id="${order.restaurantId}" checked /> 🍽️ Restaurante
+        </label>`;
+
+        if (order.deliveryId) {
+        container.innerHTML += `
+        <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl p-3 cursor-pointer text-xs font-semibold bg-white">
+        <input type="radio" name="reportTarget" value="delivery" data-id="${order.deliveryId}" /> 🛵 Repartidor
+        </label>`;
+        }
+
+        if (order.products && order.products.length > 0) {
+        order.products.forEach(p => {
+        container.innerHTML += `
+        <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl p-3 cursor-pointer text-xs font-semibold bg-white">
+        <input type="radio" name="reportTarget" value="product" data-id="${p.productId}" /> 🍔 Plato: ${p.productName}
+        </label>`;
+        });
+        }
+        }
+
+        async function submitEntityReport() {
+        const orderId = document.getElementById('reportOrderSelect').value;
+        if (!orderId) { alert("Por favor selecciona una orden."); return; }
+
+        const checkedRadio = document.querySelector('input[name="reportTarget"]:checked');
+        if (!checkedRadio) { alert("Elige la entidad culpable."); return; }
+
+        const reason = document.getElementById('reportReason').value.trim();
+        if (!reason) { alert("Escribe el motivo del reporte."); return; }
+
+        const targetType = checkedRadio.value;
+        const targetId = parseInt(checkedRadio.dataset.id);
+
+        const payload = {
+        sourcePersonId: parseInt(userId),
+        reason: reason,
+        restaurantId: targetType === "restaurant" ? targetId : null,
+        deliveryId: targetType === "delivery" ? targetId : null,
+        productId: targetType === "product" ? targetId : null
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        alert("🚨 Queja registrada con éxito. El administrador tomará cartas en el asunto.");
+        document.getElementById('reportReason').value = '';
+        showTab('crear');
+        } else {
+        alert("Error al procesar el reporte: " + await res.text());
+        }
+        } catch (err) { alert("Error al conectar con la API."); }
+        }
+
+        loadDeliveredOrders();
+        loadReviews();
+    </script>
+</body>
+</html>

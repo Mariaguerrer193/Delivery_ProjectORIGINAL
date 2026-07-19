@@ -1,0 +1,155 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Detalle de entrega — Repartidor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · REPARTIDOR</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">📦 Ofertas y entrega</a>
+                <a href="/Delivery/Earnings" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">💰 Ganancias</a>
+                <a href="/Delivery/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Delivery/Reports" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🚨 Mis Reportes</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 max-w-2xl mx-auto w-full">
+        <a href="/Delivery/Start" class="text-xs font-bold text-[#8A8578] mb-4 inline-block">← Volver a ofertas</a>
+
+        <div id="orderCard" class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+            <p class="text-sm text-[#8A8578]">Cargando pedido...</p>
+        </div>
+
+        <!-- CONFIRMAR ENTREGA -->
+        <div id="deliverForm" class="hidden bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] mt-6">
+            <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">✅ Confirmar entrega</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Código de confirmación del cliente</label>
+                    <input type="text" id="confirmCode" placeholder="Ej. 4821" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Foto de evidencia (URL)</label>
+                    <input type="text" id="evidencePhoto" placeholder="https://..." class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                </div>
+                <div id="cashNote" class="hidden bg-[#FBF6EC] border border-[#E4DAC4] rounded-xl p-3">
+                    <label class="flex items-center gap-2 text-sm font-semibold">
+                        <input type="checkbox" id="cashConfirm" /> Confirmo que recibí el pago en efectivo
+                    </label>
+                </div>
+                <button onclick="confirmDelivery()" class="w-full bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-3 rounded-xl text-sm font-archivo">
+                    MARCAR COMO ENTREGADO
+                </button>
+                <span id="deliverMessage" class="text-xs font-medium block hidden"></span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const ORDER_ID = params.get('orderId') || params.get('id');
+        const API_BASE = "https://localhost:7042";
+        let currentOrder = null;
+
+        async function loadOrder() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}`);
+        currentOrder = await res.json();
+
+        const items = (currentOrder.detailOrders || []).map(d =>
+        `<div class="flex justify-between text-sm py-1"><span>${d.quantity}x ${d.product ? d.product.name : 'Producto'}</span><span class="font-mono">$${(d.quantity * d.price).toFixed(2)}</span></div>`
+        ).join('');
+
+        const total = (currentOrder.detailOrders || []).reduce((s, d) => s + d.quantity * d.price, 0);
+        const clientPhone = currentOrder.client ? currentOrder.client.phone : null;
+
+        document.getElementById('orderCard').innerHTML = `
+        <span class="font-mono text-xs text-[#FF4D2E] font-bold">#ORD-${currentOrder.id}</span>
+        <h1 class="font-archivo text-xl mt-1 mb-3">${currentOrder.status}</h1>
+        <p class="text-sm text-neutral-600 mb-1"><b>Cliente:</b> ${currentOrder.client ? currentOrder.client.name : 'Cliente'}</p>
+        <p class="text-sm text-neutral-600 mb-1"><b>Dirección:</b> ${currentOrder.client ? currentOrder.client.mainAddress : 'No disponible'}</p>
+        <p class="text-sm text-neutral-600 mb-4"><b>Teléfono:</b> ${clientPhone || 'No disponible'}</p>
+        <div class="border-t border-dashed border-[#E4DAC4] pt-3">${items}</div>
+        <div class="border-t-2 border-[#14120F] pt-3 mt-3 flex justify-between font-archivo text-base">
+        <span>TOTAL</span><span>$${total.toFixed(2)}</span>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-4">
+        ${clientPhone ? `<a href="tel:${clientPhone}" class="bg-white border-2 border-[#14120F] px-4 py-2 rounded-xl text-xs font-bold">📞 Llamar al cliente</a>` : ''}
+        </div>
+        `;
+
+        if (currentOrder.status === "En camino") {
+        document.getElementById('deliverForm').classList.remove('hidden');
+        document.getElementById('cashNote').classList.remove('hidden'); // el pago en efectivo se confirma siempre que aplique
+        } else {
+        document.getElementById('deliverForm').classList.add('hidden');
+        }
+        } catch (err) {
+        console.error(err);
+        document.getElementById('orderCard').innerHTML = `<p class="text-sm text-red-500">No se pudo cargar el pedido.</p>`;
+        }
+        }
+
+        async function confirmDelivery() {
+        const msg = document.getElementById('deliverMessage');
+        const code = document.getElementById('confirmCode').value.trim();
+        const photo = document.getElementById('evidencePhoto').value.trim();
+
+        if (!code) {
+        showMsg("Ingresa el código de confirmación que te dio el cliente.", true);
+        return;
+        }
+        if (!photo) {
+        showMsg("Sube la URL de la foto de evidencia de entrega.", true);
+        return;
+        }
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify("Entregado")
+        });
+
+        if (res.ok) {
+        showMsg("¡Entrega confirmada con éxito!", false);
+        setTimeout(() => window.location.href = '/Delivery/Start', 1200);
+        } else {
+        showMsg("No se pudo confirmar la entrega.", true);
+        }
+        } catch (err) {
+        showMsg("No se pudo conectar con el servidor.", true);
+        }
+        }
+
+        function showMsg(text, isError) {
+        const msg = document.getElementById('deliverMessage');
+        msg.innerText = text;
+        msg.className = "text-xs font-medium block " + (isError ? "text-red-500" : "text-emerald-600");
+        }
+
+        loadOrder();
+    </script>
+</body>
+</html>

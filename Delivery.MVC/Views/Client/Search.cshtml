@@ -1,0 +1,473 @@
+﻿@*
+    Vista de Búsqueda de Platos para Clientes - Corregida con Reseñas de Productos
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buscar Platos — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR LATERAL COMPLETO -->
+    <aside class="w-[240px] bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between sticky top-0 h-screen shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-[0.12em] flex items-center gap-2 mb-8 px-2 font-bold">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#FF4D2E] shadow-[0_0_0_4px_rgba(255,77,46,0.2)]"></span>
+                DELIVERY
+            </div>
+
+            <nav class="flex flex-col gap-1">
+                <a href="/Client/Start" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏠</span> Inicio</a>
+                <a href="/Client/Search" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🔍</span> Buscar Platos</a>
+                <a href="/Client/Cart" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🛒</span> Mi Carrito</a>
+                <a href="/Client/Orders" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🧾</span> Mis Pedidos</a>
+                <a href="/Client/Reviews" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>⭐</span> Reseñas</a>
+                <a href="/Client/Coupons" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏷️</span> Cupones</a>
+            </nav>
+        </div>
+
+        <!-- Usuario de la sesión -->
+        <div class="border-t border-neutral-800 pt-4 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-[#E8A33D] flex items-center justify-center font-bold text-[#14120F] text-sm font-archivo" id="avatarCircle">
+                    U
+                </div>
+                <div class="text-xs">
+                    <b class="block text-sm font-semibold text-white" id="clientName">Usuario</b>
+                    <span class="text-[#8A8578] font-mono">CLIENTE</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full text-center text-xs bg-neutral-900 hover:bg-red-600 hover:text-white font-bold py-2 rounded-lg transition-all font-mono">
+                CERRAR SESIÓN
+            </button>
+        </div>
+    </aside>
+
+    <!-- CUERPO PRINCIPAL -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#FBF6EC]">
+        <header class="h-20 border-b-2 border-[#E4DAC4] px-8 flex items-center justify-between bg-white shrink-0">
+            <h1 class="font-archivo text-xl tracking-tight">Explorar el Menú</h1>
+            <a href="/Client/Cart" class="bg-[#14120F] text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#FF4D2E] transition-colors">
+                🛒 Ver carrito (<span id="cartCount">0</span>)
+            </a>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                    <label class="block font-mono text-[10.5px] font-bold uppercase tracking-wider text-[#6b6455] mb-2">Buscar plato</label>
+                    <input type="text" id="searchInput" oninput="filterDishes()" placeholder="ej. Pizza, Hamburguesa..."
+                           class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors" />
+                </div>
+
+                <div>
+                    <label class="block font-mono text-[10.5px] font-bold uppercase tracking-wider text-[#6b6455] mb-2">Categoría</label>
+                    <select id="categoryFilter" onchange="filterDishes()"
+                            class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-mono text-[10.5px] font-bold uppercase tracking-wider text-[#6b6455]">Rango de precio</label>
+                        <span class="font-mono text-xs font-bold text-[#FF4D2E]">
+                            $<span id="minPriceLabel">5</span> — $<span id="maxPriceLabel">15</span>
+                        </span>
+                    </div>
+                    <div class="relative h-6 flex items-center mt-3">
+                        <div class="absolute w-full h-1.5 bg-[#E4DAC4] rounded-full"></div>
+                        <div id="rangeTrack" class="absolute h-1.5 bg-[#FF4D2E] rounded-full"></div>
+                        <input type="range" id="minPriceRange" min="0" max="50" value="5" step="1" oninput="onRangeChange()"
+                               class="range-thumb absolute w-full appearance-none bg-transparent pointer-events-none" />
+                        <input type="range" id="maxPriceRange" min="0" max="50" value="15" step="1" oninput="onRangeChange()"
+                               class="range-thumb absolute w-full appearance-none bg-transparent pointer-events-none" />
+                    </div>
+                </div>
+            </div>
+
+            <div id="dishesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL FLOTANTE DE RESEÑAS DE PRODUCTO -->
+    <div id="productReviewsModal" class="fixed inset-0 bg-black/50 z-[2000] hidden flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl w-full max-w-md p-6 shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center border-b-2 border-dashed border-[#E4DAC4] pb-3 mb-4 shrink-0">
+                <h3 class="font-archivo text-base truncate" id="modalProductName">Reseñas del Plato</h3>
+                <button onclick="closeProductReviewsModal()" class="text-neutral-500 hover:text-black font-archivo text-sm font-bold">✕</button>
+            </div>
+
+            <!-- CONTENEDOR CON SCROLL SUPERIOR PARA VER RESEÑAS -->
+            <div id="modalReviewsList" class="flex-1 overflow-y-auto space-y-3 pr-1 mb-4 text-xs">
+                <p class="text-[#8A8578] font-mono">Cargando comentarios...</p>
+            </div>
+
+            <!-- FORMULARIO INFERIOR PARA CREAR RESEÑA -->
+            <div id="modalReviewForm" class="border-t-2 border-[#14120F] pt-4 shrink-0 space-y-3">
+                <h4 class="font-archivo text-xs uppercase tracking-wider text-neutral-500">Escribe tu opinión</h4>
+                <div id="modalStarsPicker" class="flex gap-1">
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="1">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="2">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="3">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="4">★</span>
+                    <span class="star-modal text-xl cursor-pointer text-[#E4DAC4] transition-colors" data-value="5">★</span>
+                </div>
+                <textarea id="modalReviewComment" rows="2" placeholder="¿Qué tal estuvo el sabor y la porción?..."
+                          class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-3 py-2 text-xs font-medium outline-none resize-none"></textarea>
+                <button id="modalSubmitBtn" onclick="submitProductReview()" class="w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-xs font-archivo tracking-wide hover:bg-[#14120F] transition-colors">
+                    PUBLICAR RESEÑA DEL PLATO
+                </button>
+                <p id="modalMessage" class="text-[11px] font-mono text-center hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .range-thumb::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        pointer-events: auto;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #14120F;
+        border: 2px solid #FBF6EC;
+        box-shadow: 0 0 0 1px #14120F;
+        cursor: pointer;
+        margin-top: 0;
+        }
+
+        .range-thumb::-moz-range-thumb {
+        pointer-events: auto;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #14120F;
+        border: 2px solid #FBF6EC;
+        box-shadow: 0 0 0 1px #14120F;
+        cursor: pointer;
+        }
+
+        .range-thumb::-webkit-slider-runnable-track {
+        background: transparent;
+        }
+
+        .range-thumb::-moz-range-track {
+        background: transparent;
+        }
+    </style>
+
+    <script>
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userName');
+        const userRole = localStorage.getItem('userRole');
+        const API_BASE = "https://localhost:7042";
+
+        if (!userId || userRole !== 'Client') {
+        window.location.href = '/Auth/Login';
+        } else {
+        document.getElementById('clientName').innerText = userName;
+        document.getElementById('avatarCircle').innerText = userName.substring(0, 2).toUpperCase();
+        }
+
+        function logout() {
+        localStorage.clear();
+        window.location.href = '/Auth/Login';
+        }
+
+        // ---- Carrito real, igual que en Menu.cshtml ----
+        function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+        function saveCart(cart) { localStorage.setItem('cart', JSON.stringify(cart)); }
+        function updateCartCount() {
+        const cart = getCart();
+        document.getElementById('cartCount').innerText = cart.reduce((a, i) => a + i.quantity, 0);
+        }
+
+        function addToCart(id, name, price, restaurantId) {
+        const cart = getCart();
+        const existing = cart.find(i => i.productId === id);
+        if (existing) existing.quantity++;
+        else cart.push({ productId: id, name, price, quantity: 1, restaurantId });
+        saveCart(cart);
+        updateCartCount();
+        }
+
+        let allDishes = [];
+        let currentModalProductId = null;
+        let modalSelectedRating = 0;
+        let clientCompletedProducts = new Set();
+
+        async function cacheClientDeliveredProducts() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/Client/${userId}`);
+        if (res.ok) {
+        const orders = await res.json();
+        orders.filter(o => o.status === "Entregado").forEach(o => {
+        if (o.products) {
+        o.products.forEach(p => clientCompletedProducts.add(p.productId));
+        }
+        });
+        }
+        } catch (err) { console.error("Error cargando elegibilidad de productos", err); }
+        }
+
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(star => {
+        star.addEventListener('click', () => {
+        modalSelectedRating = parseInt(star.dataset.value);
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(s => {
+        s.style.color = parseInt(s.dataset.value) <= modalSelectedRating ? '#E8A33D' : '#E4DAC4';
+        });
+        });
+        });
+
+        async function loadDishes() {
+        try {
+        const response = await fetch(`${API_BASE}/api/Products`);
+        if (response.ok) {
+        allDishes = await response.json();
+        setupCategoryOptions();
+        setupPriceRange();
+        renderDishes(allDishes);
+        } else {
+        document.getElementById('dishesGrid').innerHTML = `<p class="text-xs font-mono text-[#8A8578]">No se pudieron obtener los platos disponibles.</p>`;
+        }
+        } catch (error) {
+        console.error(error);
+        document.getElementById('dishesGrid').innerHTML = `<p class="text-xs font-mono text-[#8A8578]">Error al conectar con la API.</p>`;
+        }
+        }
+
+        function setupCategoryOptions() {
+        const select = document.getElementById('categoryFilter');
+        const categories = [...new Set(allDishes.map(d => d.category).filter(c => c && c.trim() !== ''))].sort();
+        categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = cat;
+        select.appendChild(opt);
+        });
+        }
+
+        function setupPriceRange() {
+        const prices = allDishes.map(d => d.price).filter(p => typeof p === 'number');
+        const maxPrice = prices.length > 0 ? Math.ceil(Math.max(...prices)) : 50;
+
+        const minRange = document.getElementById('minPriceRange');
+        const maxRange = document.getElementById('maxPriceRange');
+
+        minRange.max = maxPrice;
+        maxRange.max = maxPrice;
+
+        minRange.value = 5;
+        maxRange.value = Math.min(15, maxPrice);
+
+        updateRangeUI();
+        }
+
+        function onRangeChange() {
+        const minRange = document.getElementById('minPriceRange');
+        const maxRange = document.getElementById('maxPriceRange');
+
+        let minVal = parseInt(minRange.value);
+        let maxVal = parseInt(maxRange.value);
+
+        if (minVal > maxVal) {
+        if (event.target === minRange) minRange.value = maxVal;
+        else maxRange.value = minVal;
+        }
+
+        updateRangeUI();
+        filterDishes();
+        }
+
+        function updateRangeUI() {
+        const minRange = document.getElementById('minPriceRange');
+        const maxRange = document.getElementById('maxPriceRange');
+        const trackMax = parseInt(minRange.max);
+
+        const minVal = parseInt(minRange.value);
+        const maxVal = parseInt(maxRange.value);
+
+        document.getElementById('minPriceLabel').innerText = minVal;
+        document.getElementById('maxPriceLabel').innerText = maxVal;
+
+        const minPercent = trackMax === 0 ? 0 : (minVal / trackMax) * 100;
+        const maxPercent = trackMax === 0 ? 100 : (maxVal / trackMax) * 100;
+
+        const track = document.getElementById('rangeTrack');
+        track.style.left = minPercent + '%';
+        track.style.right = (100 - maxPercent) + '%';
+        }
+
+        function renderDishes(dishes) {
+        const grid = document.getElementById('dishesGrid');
+        grid.innerHTML = '';
+
+        if(dishes.length === 0) {
+        grid.innerHTML = `<p class="text-xs font-mono text-[#8A8578] col-span-full">No se encontraron platos que coincidan.</p>`;
+        return;
+        }
+
+        dishes.forEach(d => {
+        const img = d.photoUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80';
+
+        grid.innerHTML += `
+        <div class="bg-white border-2 border-[#E4DAC4] rounded-2xl overflow-hidden flex flex-col justify-between hover:-translate-y-0.5 transition-transform duration-150 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+        <div class="h-36 bg-cover bg-center" style="background-image: url('${img}')"></div>
+        <div class="p-4 flex flex-col justify-between flex-1">
+        <div>
+        <div class="flex justify-between items-start gap-2 mb-2">
+        <h4 class="font-archivo text-base text-[#14120F] line-clamp-1">${d.name}</h4>
+        <span class="font-mono text-sm font-bold text-[#FF4D2E] bg-[#FBF6EC] px-2 py-0.5 rounded border border-[#E4DAC4] shrink-0">$${d.price.toFixed(2)}</span>
+        </div>
+        <p class="text-xs text-[#8A8578] font-medium line-clamp-2 mb-4">${d.description || 'Sin descripción disponible.'}</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+        <button onclick='openProductReviewsModal(${d.id}, ${JSON.stringify(d.name)})' class="bg-[#14120F] text-[#FBF6EC] hover:bg-neutral-800 font-bold py-2 rounded-xl text-[11px] font-mono tracking-tight transition-colors">
+        ⭐ Reseñas
+        </button>
+        <button onclick='addToCart(${d.id}, ${JSON.stringify(d.name)}, ${d.price}, ${d.restaurantId})' class="col-span-2 bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-2 rounded-xl text-[11px] font-mono tracking-wide transition-colors">
+        + AGREGAR
+        </button>
+        </div>
+        </div>
+        </div>
+        `;
+        });
+        }
+
+        async function openProductReviewsModal(productId, productName) {
+        currentModalProductId = productId;
+        modalSelectedRating = 0;
+        document.querySelectorAll('#modalStarsPicker .star-modal').forEach(s => s.style.color = '#E4DAC4');
+        document.getElementById('modalReviewComment').value = '';
+        document.getElementById('modalMessage').classList.add('hidden');
+        document.getElementById('modalProductName').innerText = productName;
+        document.getElementById('productReviewsModal').classList.remove('hidden');
+
+        if (!clientCompletedProducts.has(productId)) {
+        document.getElementById('modalReviewForm').style.opacity = "0.4";
+        document.getElementById('modalReviewForm').style.pointerEvents = "none";
+        const msg = document.getElementById('modalMessage');
+        msg.innerText = "🔒 Solo puedes opinar si ya compraste este plato.";
+        msg.className = "text-[11px] font-mono text-center text-red-500 block";
+        } else {
+        document.getElementById('modalReviewForm').style.opacity = "1";
+        document.getElementById('modalReviewForm').style.pointerEvents = "auto";
+        }
+
+        const list = document.getElementById('modalReviewsList');
+        list.innerHTML = '<p class="text-[#8A8578] font-mono">Cargando...</p>';
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews/product/${productId}`);
+        const reviews = await res.json();
+        list.innerHTML = '';
+
+        if (!reviews || reviews.length === 0) {
+        list.innerHTML = '<p class="text-[#8A8578] font-mono text-center py-4">Este plato aún no tiene calificaciones.</p>';
+        return;
+        }
+
+        reviews.forEach(r => {
+        let stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+        list.innerHTML += `
+        <div class="bg-[#FBF6EC] border border-[#E4DAC4] rounded-xl p-3 shadow-sm">
+        <div class="flex justify-between font-bold mb-1">
+        <span>${r.client ? r.client.name : 'Cliente'}</span>
+        <span class="text-[#E8A33D] font-mono">${stars}</span>
+        </div>
+        <p class="text-neutral-600 leading-tight">${r.comment || ''}</p>
+        </div>`;
+        });
+        } catch (err) {
+        list.innerHTML = '<p class="text-red-500 font-mono">Error al cargar opiniones.</p>';
+        }
+        }
+
+        function closeProductReviewsModal() {
+        document.getElementById('productReviewsModal').classList.add('hidden');
+        }
+
+        async function submitProductReview() {
+        if (modalSelectedRating === 0) { alert("Elige una calificación."); return; }
+        const comment = document.getElementById('modalReviewComment').value.trim();
+        if (!comment) { alert("Escribe un comentario."); return; }
+
+        const payload = {
+        clientId: parseInt(userId),
+        rating: modalSelectedRating,
+        comment: comment,
+        productId: currentModalProductId
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        alert("¡Reseña de producto añadida con éxito!");
+        openProductReviewsModal(currentModalProductId, document.getElementById('modalProductName').innerText);
+        } else {
+        alert("Error al enviar: " + await res.text());
+        }
+        } catch (err) { alert("Error de conexión con la API."); }
+        }
+
+        function filterDishes() {
+        const text = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        const minPrice = parseInt(document.getElementById('minPriceRange').value);
+        const maxPrice = parseInt(document.getElementById('maxPriceRange').value);
+
+        const filtered = allDishes.filter(d => {
+        const matchesText = d.name.toLowerCase().includes(text) || (d.description && d.description.toLowerCase().includes(text));
+        const matchesCategory = !category || d.category === category;
+        const matchesPrice = d.price >= minPrice && d.price <= maxPrice;
+        return matchesText && matchesCategory && matchesPrice;
+        });
+
+        renderDishes(filtered);
+        }
+
+        updateCartCount();
+        cacheClientDeliveredProducts();
+        loadDishes();
+    </script>
+</body>
+</html>

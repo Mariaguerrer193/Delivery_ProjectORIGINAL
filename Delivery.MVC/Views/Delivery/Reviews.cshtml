@@ -1,0 +1,99 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mis Reseñas — Repartidor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · REPARTIDOR</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">📦 Ofertas</a>
+                <a href="/Delivery/Earnings" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">💰 Ganancias</a>
+                <a href="/Delivery/Reviews" class="px-4 py-3 rounded-xl bg-[#FF4D2E] text-white font-semibold">⭐ Reseñas</a>
+                <a href="/Delivery/Reports" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🚨 Mis Reportes</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
+        <h1 class="font-archivo text-2xl mb-6">Reseñas de tus clientes</h1>
+        <div id="reviewsList" class="space-y-4">
+            <p class="text-sm text-[#8A8578]">Cargando reseñas...</p>
+        </div>
+    </main>
+
+    <!-- MODAL DE REPORTE -->
+    <div id="reportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999]">
+        <div class="bg-white p-6 rounded-2xl max-w-sm w-full border-2 border-[#14120F]">
+            <h3 class="font-archivo text-sm mb-3">🚩 Reportar reseña</h3>
+            <input type="hidden" id="reportReviewId" />
+            <textarea id="reportReason" class="w-full border-2 border-[#E4DAC4] rounded-xl p-3 text-sm outline-none" rows="3" placeholder="Motivo del reporte..."></textarea>
+            <div class="flex gap-2 mt-4">
+                <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="flex-1 py-2 text-xs font-bold border-2 border-[#14120F] rounded-xl">Cancelar</button>
+                <button onclick="submitReport()" class="flex-1 py-2 text-xs font-bold bg-[#FF4D2E] text-white rounded-xl">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DELIVERY_ID = localStorage.getItem('userId');
+        const API_BASE = "https://localhost:7042";
+
+        async function loadReviews() {
+        const list = document.getElementById('reviewsList');
+        const res = await fetch(`${API_BASE}/api/Reviews/delivery/${DELIVERY_ID}`);
+        const reviews = await res.json();
+        list.innerHTML = '';
+
+        if (!reviews || reviews.length === 0) { list.innerHTML = `<p>No tienes reseñas.</p>`; return; }
+
+        reviews.forEach(r => {
+        list.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+        <p class="text-sm font-bold">${r.client?.name || 'Cliente'}</p>
+        <p class="text-xs mt-1">${r.comment || ''}</p>
+        <button onclick="openReportModal(${r.id})" class="mt-3 text-[9px] font-bold text-red-600 border px-2 py-1 rounded-lg">🚩 Reportar</button>
+        </div>`;
+        });
+        }
+
+        function openReportModal(id) {
+        document.getElementById('reportReviewId').value = id;
+        document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        async function submitReport() {
+        const id = document.getElementById('reportReviewId').value;
+        const reason = document.getElementById('reportReason').value;
+        if (!reason) { alert("Escribe un motivo"); return; }
+        await fetch(`${API_BASE}/api/Reviews/${id}/report`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ reason: reason })
+        });
+        location.reload();
+        }
+
+        loadReviews();
+    </script>
+</body>
+</html>

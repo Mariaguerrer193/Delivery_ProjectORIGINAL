@@ -1,0 +1,110 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mis Ganancias — Repartidor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · REPARTIDOR</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">📦 Ofertas y entrega</a>
+                <a href="/Delivery/Earnings" class="px-4 py-3 rounded-xl bg-[#FF4D2E] text-white font-semibold">💰 Ganancias</a>
+                <a href="/Delivery/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Delivery/Reports" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🚨 Mis Reportes</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full">
+        <h1 class="font-archivo text-2xl mb-6">Mis Ganancias</h1>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div class="bg-[#14120F] text-white rounded-2xl p-6">
+                <span class="text-xs font-mono text-[#E8A33D] font-bold uppercase">Total ganado</span>
+                <p class="font-archivo text-3xl mt-2" id="totalEarned">$0.00</p>
+            </div>
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6">
+                <span class="text-xs font-mono text-[#8A8578] font-bold uppercase">Entregas completadas</span>
+                <p class="font-archivo text-3xl mt-2" id="totalDeliveries">0</p>
+            </div>
+        </div>
+
+        <h3 class="font-archivo text-lg mb-3">Historial</h3>
+        <div id="historyList" class="space-y-3">
+            <p class="text-sm text-[#8A8578]">Cargando historial...</p>
+        </div>
+    </main>
+
+    <script>
+        const DELIVERY_ID = localStorage.getItem('userId');
+        const API_BASE = "https://localhost:7042";
+
+        // Comisión estimada del repartidor por entrega (ajustable)
+        const DELIVERY_FEE_PERCENT = 0.15;
+
+        function restaurantOf(order) {
+        const first = order.detailOrders && order.detailOrders[0];
+        return first && first.product && first.product.restaurant ? first.product.restaurant.commercialName : 'Restaurante';
+        }
+
+        async function loadEarnings() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/by-status/Entregado`);
+        const orders = await res.json();
+        const mine = (orders || []).filter(o => o.deliveryId == DELIVERY_ID);
+
+        let totalEarned = 0;
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+
+        if (mine.length === 0) {
+        list.innerHTML = `<p class="text-sm text-[#8A8578]">Aún no tienes entregas completadas.</p>`;
+        } else {
+        mine.forEach(o => {
+        const orderTotal = (o.detailOrders || []).reduce((s, d) => s + d.quantity * d.price, 0);
+        const earning = orderTotal * DELIVERY_FEE_PERCENT;
+        totalEarned += earning;
+
+        list.innerHTML += `
+        <div class="bg-white border-2 border-[#E4DAC4] rounded-2xl p-4 flex justify-between items-center shadow-[3px_3px_0px_0px_rgba(20,18,15,1)]">
+        <div>
+        <span class="font-mono text-xs text-[#FF4D2E] font-bold">#ORD-${o.id}</span>
+        <p class="text-sm font-semibold mt-1">${restaurantOf(o)}</p>
+        <p class="text-xs text-[#8A8578] font-mono mt-1">${new Date(o.orderDate).toLocaleDateString('es-EC')}</p>
+        </div>
+        <span class="font-archivo text-base text-[#6B8F71]">+$${earning.toFixed(2)}</span>
+        </div>`;
+        });
+        }
+
+        document.getElementById('totalEarned').innerText = `$${totalEarned.toFixed(2)}`;
+        document.getElementById('totalDeliveries').innerText = mine.length;
+        } catch (err) {
+        console.error(err);
+        document.getElementById('historyList').innerHTML = `<p class="text-sm text-[#8A8578]">No se pudo cargar el historial.</p>`;
+        }
+        }
+
+        loadEarnings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+﻿@*
+    Vista de Cupones para Clientes
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis Cupones — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-[240px] bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between sticky top-0 h-screen shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-[0.12em] flex items-center gap-2 mb-8 px-2 font-bold">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#FF4D2E] shadow-[0_0_0_4px_rgba(255,77,46,0.2)]"></span>
+                DELIVERY
+            </div>
+
+            <nav class="flex flex-col gap-1">
+                <a href="/Client/Start" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏠</span> Inicio</a>
+                <a href="/Client/Search" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🔍</span> Buscar Platos</a>
+                <a href="/Client/Cart" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🛒</span> Mi Carrito</a>
+                <a href="/Client/Orders" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🧾</span> Mis Pedidos</a>
+                <a href="/Client/Reviews" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>⭐</span> Reseñas</a>
+                <a href="/Client/Coupons" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏷️</span> Cupones</a>
+            </nav>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-4 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-[#E8A33D] flex items-center justify-center font-bold text-[#14120F] text-sm font-archivo" id="avatarCircle">U</div>
+                <div class="text-xs">
+                    <b class="block text-sm font-semibold text-white" id="clientName">Usuario</b>
+                    <span class="text-[#8A8578] font-mono">CLIENTE</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full text-center text-xs bg-neutral-900 hover:bg-red-600 hover:text-white font-bold py-2 rounded-lg transition-all font-mono">
+                CERRAR SESIÓN
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#FBF6EC]">
+        <header class="h-20 border-b-2 border-[#E4DAC4] px-8 flex items-center bg-white shrink-0">
+            <h1 class="font-archivo text-xl tracking-tight">Cupones Disponibles</h1>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl" id="couponsContainer">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userName');
+        const userRole = localStorage.getItem('userRole');
+
+        if (!userId || userRole !== 'Client') {
+        window.location.href = '/Auth/Login';
+        } else {
+        document.getElementById('clientName').innerText = userName;
+        document.getElementById('avatarCircle').innerText = userName.substring(0, 2).toUpperCase();
+        }
+
+        function logout() {
+        localStorage.clear();
+        window.location.href = '/Auth/Login';
+        }
+
+        const backupCoupons = [
+        { code: "BIENVENIDA10", desc: "10% de descuento total en tu primera orden de comida de la app.", badge: "10% OFF" },
+        { code: "IBARRADELIVERY", desc: "Descuento fijo de $3.00 aplicando en cualquier consumo local.", badge: "$3.00 DTO" }
+        ];
+
+        function renderCoupons() {
+        const container = document.getElementById('couponsContainer');
+        backupCoupons.forEach(c => {
+        container.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] flex justify-between items-center gap-4">
+        <div>
+        <span class="inline-block bg-[#FF4D2E] text-white font-archivo text-xs px-3 py-1 rounded-lg tracking-wide mb-3">${c.code}</span>
+        <p class="text-xs text-neutral-600 font-medium leading-relaxed">${c.desc}</p>
+        </div>
+        <div class="font-archivo text-base text-[#6B8F71] bg-[#6B8F71]/10 border border-[#6B8F71]/20 px-3 py-4 rounded-xl text-center min-w-[90px] shrink-0">
+        ${c.badge}
+        </div>
+        </div>
+        `;
+        });
+        }
+        renderCoupons();
+    </script>
+</body>
+</html>

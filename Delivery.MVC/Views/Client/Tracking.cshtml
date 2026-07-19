@@ -1,0 +1,163 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Seguimiento en Tiempo Real — Cliente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --chile: #FF4D2E;
+        --sage: #6B8F71;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        #realMap {
+        width: 100%;
+        height: 100%;
+        }
+
+        .blip {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 1.5s infinite;
+        }
+
+        @@keyframes pulse {
+        0%, 100% {
+        opacity: 1;
+        }
+
+        50% {
+        opacity: 0.3;
+        }
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · CLIENTE</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Client/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏠 Inicio</a>
+                <a href="/Client/Search" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🔍 Buscar Platos</a>
+                <a href="/Client/Cart" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🛒 Mi Carrito</a>
+                <a href="/Client/Orders" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🧾 Mis Pedidos</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative bg-[#EFE7D6]">
+        <div class="absolute top-6 left-6 z-[1000] bg-[#14120F] text-white p-4 rounded-xl shadow-2xl border-2 border-white max-w-sm">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#E8A33D] mb-1">
+                <span class="blip"></span> <span id="statusLabel">CARGANDO...</span>
+            </div>
+            <h2 class="font-archivo text-base" id="titleLabel">Buscando tu pedido...</h2>
+            <p class="text-xs text-neutral-400 mt-1">Pedido #<span id="orderIdLabel">-</span></p>
+        </div>
+
+        <div id="realMap"></div>
+    </main>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const ORDER_ID = params.get('orderId') || 1;
+        document.getElementById('orderIdLabel').innerText = ORDER_ID;
+
+        const API_BASE = "https://localhost:7042";
+        const map = L.map('realMap').setView([-0.35, -78.12], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let markerCliente = null, markerRepartidor = null, markerRestaurante = null;
+        let routeLine = null, routeFetched = false;
+
+        const iconCliente = L.divIcon({ html: '<div style="background:#6B8F71; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #6B8F71;"></div>', className: '', iconSize: [16, 16] });
+        const iconRepartidor = L.divIcon({ html: '<div style="background:#FF4D2E; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #FF4D2E;"></div>', className: '', iconSize: [18, 18] });
+        const iconRestaurante = L.divIcon({ html: '<div style="background:#E8A33D; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #E8A33D;"></div>', className: '', iconSize: [16, 16] });
+
+        async function dibujarRutaReal(lngA, latA, lngB, latB) {
+        try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${lngA},${latA};${lngB},${latB}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.routes || data.routes.length === 0) return;
+
+        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        routeLine = L.polyline(coords, { color: '#FF4D2E', weight: 4, opacity: 0.8 }).addTo(map);
+        map.fitBounds(routeLine.getBounds().pad(0.2));
+        } catch (err) {
+        console.error(err);
+        }
+        }
+
+        async function actualizarMapa() {
+        try {
+        const res = await fetch(`${API_BASE}/api/Tracking/${ORDER_ID}`);
+        if (!res.ok) {
+        document.getElementById('statusLabel').innerText = "PEDIDO NO ENCONTRADO";
+        return;
+        }
+        const data = await res.json();
+        document.getElementById('statusLabel').innerText = (data.status || "EN PROCESO").toUpperCase();
+
+        if (data.status === "Entregado") {
+        document.getElementById('titleLabel').innerText = "¡Tu pedido fue entregado! 🎉";
+        } else if (data.latRepartidor) {
+        document.getElementById('titleLabel').innerText = "Tu repartidor está en camino 🛵";
+        } else {
+        document.getElementById('titleLabel').innerText = "Esperando que el repartidor inicie la ruta";
+        }
+
+        if (data.latRestaurante && data.lngRestaurante && !markerRestaurante) {
+        markerRestaurante = L.marker([data.latRestaurante, data.lngRestaurante], { icon: iconRestaurante }).addTo(map).bindPopup("Restaurante");
+        }
+
+        if (data.latCliente && data.lngCliente && !markerCliente) {
+        markerCliente = L.marker([data.latCliente, data.lngCliente], { icon: iconCliente }).addTo(map).bindPopup("Tu ubicación");
+        map.setView([data.latCliente, data.lngCliente], 14);
+        }
+
+        if (!routeFetched && data.latRestaurante && data.lngRestaurante && data.latCliente && data.lngCliente) {
+        routeFetched = true;
+        dibujarRutaReal(data.lngRestaurante, data.latRestaurante, data.lngCliente, data.latCliente);
+        }
+
+        // MOVER AL REPARTIDOR EN TIEMPO REAL
+        if (data.latRepartidor && data.lngRepartidor) {
+        if (!markerRepartidor) {
+        markerRepartidor = L.marker([data.latRepartidor, data.lngRepartidor], { icon: iconRepartidor }).addTo(map).bindPopup("Repartidor");
+        } else {
+        // Leaflet actualiza la posición del pin suavemente con cada polling de 3 segundos
+        markerRepartidor.setLatLng([data.latRepartidor, data.lngRepartidor]);
+        }
+        }
+        } catch (err) {
+        console.error(err);
+        }
+        }
+
+        actualizarMapa();
+        setInterval(actualizarMapa, 3000); // Polling constante del cliente
+    </script>
+</body>
+</html>

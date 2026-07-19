@@ -1,0 +1,366 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mi Carrito — Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Client/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏠 Inicio</a>
+                <a href="/Client/Search" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🔍 Buscar Platos</a>
+                <a href="/Client/Cart" class="px-4 py-3 rounded-xl bg-[#FF4D2E] text-white font-semibold">🛒 Mi Carrito</a>
+                <a href="/Client/Orders" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🧾 Mis Pedidos</a>
+                <a href="/Client/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Client/Coupons" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">🏷️ Cupones</a>
+            </nav>
+        </div>
+        <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white transition-all">⚠️ CERRAR SESIÓN</button>
+    </aside>
+
+    <main class="flex-1 flex overflow-hidden">
+        <div class="flex-1 overflow-y-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-2 space-y-6">
+                <h1 class="font-archivo text-2xl tracking-tight">Finalizar Pedido</h1>
+
+                <!-- ITEMS DEL CARRITO -->
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-3">🛒 Tus productos</h3>
+                    <div id="cartItemsList" class="space-y-2"></div>
+                </div>
+
+                <!-- SECCIÓN LIMPIA: SOLÓ EL BOTÓN DEL MAPA -->
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-3">📍 Dirección de Entrega</h3>
+
+                    <button type="button" onclick="abrirModalMapa()" class="w-full bg-[#14120F] text-white text-xs font-bold py-4 rounded-xl hover:bg-[#FF4D2E] transition-all flex items-center justify-center gap-2 font-archivo">
+                        🗺️ SELECCIONAR UBICACIÓN EXACTA EN EL MAPA
+                    </button>
+
+                    <!-- Campo oculto automático para la dirección para que el backend no falle -->
+                    <input type="hidden" id="orderAddress" value="Ubicación GPS seleccionada" />
+                    <p id="coordenadasOkLabel" class="text-xs text-emerald-600 font-bold mt-3 hidden">✅ ¡Ubicación fijada con éxito! Ya puedes procesar tu pedido.</p>
+                </div>
+
+                <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <h3 class="font-archivo text-sm uppercase tracking-wide text-neutral-500 mb-4">💳 Método de Pago</h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                        <label class="pay-option border-2 border-[#14120F] rounded-xl p-4 flex items-center gap-3 cursor-pointer bg-[#FBF6EC]">
+                            <input type="radio" name="payMethod" value="Tarjeta" checked onchange="togglePayFields()" class="accent-[#FF4D2E]" />
+                            <span class="text-sm font-bold">💳 Tarjeta</span>
+                        </label>
+                        <label class="pay-option border-2 border-[#E4DAC4] hover:border-[#14120F] rounded-xl p-4 flex items-center gap-3 cursor-pointer bg-white">
+                            <input type="radio" name="payMethod" value="Transferencia" onchange="togglePayFields()" class="accent-[#FF4D2E]" />
+                            <span class="text-sm font-bold">🏦 Transferencia</span>
+                        </label>
+                        <label class="pay-option border-2 border-[#E4DAC4] hover:border-[#14120F] rounded-xl p-4 flex items-center gap-3 cursor-pointer bg-white">
+                            <input type="radio" name="payMethod" value="Efectivo" onchange="togglePayFields()" class="accent-[#FF4D2E]" />
+                            <span class="text-sm font-bold">💵 Efectivo</span>
+                        </label>
+                    </div>
+
+                    <div id="fieldsTarjeta" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block text-[10.5px] font-bold uppercase mb-1 text-[#6b6455]">Número de tarjeta</label>
+                            <input type="text" id="cardNumber" placeholder="4111 1111 1111 1111" maxlength="19"
+                                   class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-[10.5px] font-bold uppercase mb-1 text-[#6b6455]">CVV</label>
+                            <input type="text" id="cardCvv" placeholder="123" maxlength="4"
+                                   class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-[10.5px] font-bold uppercase mb-1 text-[#6b6455]">Fecha de expiración</label>
+                            <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5"
+                                   class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                        </div>
+                    </div>
+
+                    <div id="fieldsTransferencia" class="hidden grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-[10.5px] font-bold uppercase mb-1 text-[#6b6455]">Número de cuenta</label>
+                            <input type="text" id="transferAccount" placeholder="00-000000-0"
+                                   class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none" />
+                        </div>
+                        <p class="text-xs text-[#8A8578] font-mono">Se validará la transferencia una vez el restaurante confirme el pedido.</p>
+                    </div>
+
+                    <div id="fieldsEfectivo" class="hidden">
+                        <p class="text-xs text-[#8A8578] font-mono bg-[#FBF6EC] border border-[#E4DAC4] rounded-xl p-3">
+                            💵 Paga en efectivo directamente al repartidor cuando llegue tu pedido.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] h-fit space-y-6">
+                <h2 class="font-archivo text-lg border-b border-dashed border-[#E4DAC4] pb-3">Resumen</h2>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-2 text-[#8A8578]">¿Tienes un cupón?</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="couponCode" placeholder="BIENVENIDA10" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm uppercase font-semibold outline-none" />
+                        <button onclick="applyCoupon()" class="bg-[#14120F] text-white px-4 py-2 rounded-xl text-xs font-bold font-archivo hover:bg-[#FF4D2E]">Aplicar</button>
+                    </div>
+                    <span id="couponMessage" class="text-xs font-medium mt-1 block hidden"></span>
+                </div>
+
+                <div class="space-y-2 text-sm font-medium border-t border-dashed border-[#E4DAC4] pt-4">
+                    <div class="flex justify-between"><span>Subtotal:</span><span id="subtotalVal">$0.00</span></div>
+                    <div class="flex justify-between text-emerald-600"><span>Descuento:</span><span id="discountVal">-$0.00</span></div>
+                    <div class="flex justify-between border-t-2 border-[#14120F] pt-3 font-archivo text-base"><span>TOTAL:</span><span id="totalVal">$0.00</span></div>
+                </div>
+
+                <button onclick="placeOrder()" class="w-full bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-4 rounded-xl text-sm font-archivo tracking-wide transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                    PROCESAR PEDIDO REAL →
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- VENTANA MODAL PARA EL SELECTOR DEL MAPA -->
+    <div id="mapaSelectorModal" class="hidden fixed inset-0 bg-black/60 z-[5000] flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 max-w-xl w-full shadow-[8px_8px_0px_0px_rgba(20,18,15,1)] flex flex-col h-[500px]">
+            <h3 class="font-archivo text-base mb-1 text-black">Fija tu ubicación de entrega</h3>
+            <p class="text-xs text-neutral-500 mb-3">Haz clic en el mapa o mueve el marcador rojo sobre tu casa.</p>
+
+            <div id="mapaSelectorContainer" class="flex-1 rounded-xl border-2 border-[#14120F] overflow-hidden min-h-[300px]"></div>
+
+            <div class="flex gap-2 mt-4">
+                <button type="button" onclick="cerrarModalMapa()" class="flex-1 bg-white border-2 border-[#14120F] py-3 rounded-xl text-xs font-bold text-black">Cancelar</button>
+                <button type="button" onclick="confirmarUbicacionMapa()" class="flex-1 bg-[#FF4D2E] text-white py-3 rounded-xl text-xs font-bold hover:bg-[#14120F]">Confirmar Ubicación</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        const userId = localStorage.getItem('userId');
+
+        if (!userId || localStorage.getItem('userRole') !== 'Client') {
+        window.location.href = '/Auth/Login';
+        }
+
+        function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+        function saveCart(cart) { localStorage.setItem('cart', JSON.stringify(cart)); }
+
+        let discount = 0;
+        let appliedCouponCode = null;
+        let mapaIniciado = false;
+
+        let selectorMap = null;
+        let selectorMarker = null;
+        let latSeleccionada = -0.3522;
+        let lngSeleccionada = -78.1205;
+
+        function abrirModalMapa() {
+        document.getElementById('mapaSelectorModal').classList.remove('hidden');
+        if (!selectorMap) {
+        selectorMap = L.map('mapaSelectorContainer').setView([latSeleccionada, lngSeleccionada], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(selectorMap);
+
+        const iconPin = L.divIcon({
+        html: '<div style="background:#FF4D2E; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 5px rgba(0,0,0,0.4);"></div>',
+        className: '', iconSize: [18, 18]
+        });
+
+        selectorMarker = L.marker([latSeleccionada, lngSeleccionada], { icon: iconPin, draggable: true }).addTo(selectorMap);
+
+        selectorMarker.on('dragend', function (e) {
+        const position = selectorMarker.getLatLng();
+        latSeleccionada = position.lat;
+        lngSeleccionada = position.lng;
+        });
+
+        selectorMap.on('click', function (e) {
+        selectorMarker.setLatLng(e.latlng);
+        latSeleccionada = e.latlng.lat;
+        lngSeleccionada = e.latlng.lng;
+        });
+        } else {
+        setTimeout(() => { selectorMap.invalidateSize(); }, 200);
+        }
+        }
+
+        function cerrarModalMapa() {
+        document.getElementById('mapaSelectorModal').classList.add('hidden');
+        }
+
+        function confirmarUbicacionMapa() {
+        mapaIniciado = true;
+        document.getElementById('coordenadasOkLabel').classList.remove('hidden');
+        cerrarModalMapa();
+        }
+
+        function renderCart() {
+        const cart = getCart();
+        const list = document.getElementById('cartItemsList');
+        list.innerHTML = '';
+
+        if (cart.length === 0) {
+        list.innerHTML = `<p class="text-sm text-[#8A8578]">Tu carrito está vacío. <a href="/Client/Start" class="text-[#FF4D2E] font-bold">Ir a pedir →</a></p>`;
+        updateTotals();
+        return;
+        }
+
+        cart.forEach((item, index) => {
+        list.innerHTML += `
+        <div class="flex justify-between items-center text-sm py-2 border-b border-dashed border-[#E4DAC4] last:border-0">
+        <div><span class="font-bold">${item.quantity}x</span> ${item.name}</div>
+        <div class="flex items-center gap-3">
+        <span class="font-mono">$${(item.price * item.quantity).toFixed(2)}</span>
+        <button onclick="removeItem(${index})" class="text-red-500 text-xs font-bold">✕</button>
+        </div>
+        </div>`;
+        });
+        updateTotals();
+        }
+
+        function removeItem(index) {
+        const cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCart();
+        }
+
+        function getSubtotal() { return getCart().reduce((sum, i) => sum + (i.price * i.quantity), 0); }
+
+        function updateTotals() {
+        const subtotal = getSubtotal();
+        const total = Math.max(0, subtotal - discount);
+        document.getElementById('subtotalVal').innerText = `$${subtotal.toFixed(2)}`;
+        document.getElementById('discountVal').innerText = `-$${discount.toFixed(2)}`;
+        document.getElementById('totalVal').innerText = `$${total.toFixed(2)}`;
+        }
+
+        async function applyCoupon() {
+        const code = document.getElementById('couponCode').value.toUpperCase();
+        const msg = document.getElementById('couponMessage');
+        const subtotal = getSubtotal();
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Coupons/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, orderTotal: subtotal })
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        discount = data.discount;
+        appliedCouponCode = code;
+        msg.innerText = `¡Cupón "${code}" aplicado con éxito!`;
+        msg.className = "text-xs font-medium mt-1 block text-emerald-600";
+        updateTotals();
+        } else {
+        msg.innerText = "Cupón inválido.";
+        msg.className = "text-xs font-medium mt-1 block text-red-500";
+        }
+        } catch (err) { console.error(err); }
+        }
+
+        function togglePayFields() {
+        const method = document.querySelector('input[name="payMethod"]:checked').value;
+        document.getElementById('fieldsTarjeta').classList.add('hidden');
+        document.getElementById('fieldsTransferencia').classList.add('hidden');
+        document.getElementById('fieldsEfectivo').classList.add('hidden');
+
+        if (method === "Tarjeta") document.getElementById('fieldsTarjeta').classList.remove('hidden');
+        if (method === "Transferencia") document.getElementById('fieldsTransferencia').classList.remove('hidden');
+        if (method === "Efectivo") document.getElementById('fieldsEfectivo').classList.remove('hidden');
+        }
+
+        function validatePayment() {
+        const method = document.querySelector('input[name="payMethod"]:checked').value;
+        if (method === "Tarjeta") {
+        const num = document.getElementById('cardNumber').value.replace(/\s/g, '');
+        if (num.length < 13) { alert("Tarjeta no válida."); return false; }
+        }
+        return true;
+        }
+
+        async function placeOrder() {
+        const cart = getCart();
+        if (cart.length === 0 || !validatePayment()) return;
+
+        // VALIDACIÓN CLAVE: Si no ha abierto el mapa, le pide obligatoriamente fijar el pin GPS
+        if (!mapaIniciado) {
+        alert("Por favor, selecciona tu ubicación exacta en el mapa antes de procesar el pedido.");
+        return;
+        }
+
+        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
+        const orderBtn = document.querySelector('[onclick="placeOrder()"]');
+        if (orderBtn) { orderBtn.disabled = true; orderBtn.innerText = "Procesando..."; }
+
+        // Generar un texto por coordenadas por si el modelo de datos requiere la dirección como string
+        const addressText = `Ubicación GPS: [${latSeleccionada.toFixed(4)}, ${lngSeleccionada.toFixed(4)}]`;
+
+        const payload = {
+        clientId: parseInt(userId),
+        items: cart.map(i => ({ productId: i.productId, quantity: i.quantity })),
+        payMethodType: payMethod,
+        couponCode: appliedCouponCode,
+        latCliente: latSeleccionada,
+        lngCliente: lngSeleccionada
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        localStorage.removeItem('cart');
+        alert("¡Pedido registrado con éxito!");
+        window.location.href = `/Client/OrderDetail?id=${data.orderId}`;
+        } else {
+        alert("Error al crear el pedido.");
+        if (orderBtn) { orderBtn.disabled = false; orderBtn.innerText = "PROCESAR PEDIDO REAL →"; }
+        }
+        } catch (err) {
+        alert("Error de conexión.");
+        if (orderBtn) { orderBtn.disabled = false; orderBtn.innerText = "PROCESAR PEDIDO REAL →"; }
+        }
+        }
+
+        renderCart();
+    </script>
+</body>
+</html>

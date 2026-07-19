@@ -1,0 +1,260 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Seguimiento de Entrega — Repartidor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --chile: #FF4D2E;
+        --sage: #6B8F71;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        #realMap {
+        width: 100%;
+        height: 100%;
+        }
+
+        .blip {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: pulse 1.5s infinite;
+        }
+
+        /* CORRECCIÓN RAZOR: Lleva doble arroba para que no interfiera con C# */
+        @@keyframes pulse {
+        0%, 100% {
+        opacity: 1;
+        }
+
+        50% {
+        opacity: 0.3;
+        }
+        }
+
+        50% {
+        opacity: 0.3;
+        }
+
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · MAPA</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl bg-neutral-900 text-white hover:text-white">← Volver a Ofertas</a>
+            </nav>
+        </div>
+        <div>
+            <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white">⚠️ CERRAR SESIÓN</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative bg-[#EFE7D6]">
+        <div class="absolute top-6 left-6 z-[1000] bg-[#14120F] text-white p-5 rounded-xl shadow-2xl border-2 border-white max-w-sm w-80">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#E8A33D] mb-1">
+                <span class="blip"></span> <span id="statusLabel">CALCULANDO...</span>
+            </div>
+            <h2 class="font-archivo text-sm" id="titleLabel">Iniciando simulación de entrega</h2>
+            <p class="text-xs text-neutral-400 mt-1">Pedido #<span id="orderIdLabel">-</span></p>
+
+            <div class="mt-4 pt-3 border-t border-neutral-800 flex flex-col gap-2">
+                <button onclick="openFinishModalDirect()" id="finishDeliveryMapBtn" class="w-full bg-[#FF4D2E] text-white font-bold py-2.5 rounded-xl text-xs font-archivo tracking-wide hover:bg-white hover:text-black transition-all">
+                    ✅ FINALIZAR ENTREGA AQUÍ
+                </button>
+            </div>
+        </div>
+
+        <div id="realMap"></div>
+    </main>
+
+    <div id="finishModalMap" class="hidden fixed inset-0 bg-black/50 z-[3000] flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-sm w-full shadow-[6px_6px_0px_0px_rgba(20,18,15,1)]">
+            <h3 class="font-archivo text-lg mb-2 text-black">✅ Confirmar entrega</h3>
+            <p class="text-xs text-[#8A8578] mb-4">Ingresa el código de confirmación del cliente.</p>
+            <input type="text" id="finishCodeInputMap" placeholder="Ej. 1234" maxlength="10" class="w-full bg-[#FBF6EC] text-black border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-3 text-center text-lg font-archivo tracking-widest outline-none mb-3" />
+
+            <p id="finishErrorMap" class="text-xs text-red-500 font-medium mb-3 hidden"></p>
+            <div class="flex gap-2">
+                <button onclick="closeFinishModalDirect()" class="flex-1 bg-white text-black border-2 border-[#14120F] py-3 rounded-xl text-xs font-bold">Cancelar</button>
+                <button onclick="submitFinishDirect()" class="flex-1 bg-[#FF4D2E] text-white py-3 rounded-xl text-xs font-bold hover:bg-[#14120F]">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const ORDER_ID = params.get('orderId') || 1;
+        document.getElementById('orderIdLabel').innerText = ORDER_ID;
+
+        const API_BASE = "https://localhost:7042";
+        const map = L.map('realMap').setView([-0.35, -78.12], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let markerCliente = null, markerRepartidor = null, markerRestaurante = null;
+        let routeState = null, routeTimer = null;
+        let cachedConfirmationCode = null;
+
+        const iconCliente = L.divIcon({ html: '<div style="background:#6B8F71; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #6B8F71;"></div>', className: '', iconSize: [16, 16] });
+        const iconRepartidor = L.divIcon({ html: '<div style="background:#FF4D2E; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #FF4D2E;"></div>', className: '', iconSize: [18, 18] });
+        const iconRestaurante = L.divIcon({ html: '<div style="background:#E8A33D; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 3px #E8A33D;"></div>', className: '', iconSize: [16, 16] });
+
+        function loadRouteState() {
+        const raw = localStorage.getItem(`simState_${ORDER_ID}`);
+        return raw ? JSON.parse(raw) : null;
+        }
+        function saveRouteState() {
+        localStorage.setItem(`simState_${ORDER_ID}`, JSON.stringify(routeState));
+        }
+
+        async function inicializarSimulacion() {
+        try {
+        // 1. Obtener ubicaciones básicas de la orden
+        const trackRes = await fetch(`${API_BASE}/api/Tracking/${ORDER_ID}`);
+        const trackData = await trackRes.json();
+
+        if (!trackData.latRestaurante || !trackData.latCliente) {
+        alert("Error: Faltan las coordenadas base en la API.");
+        return;
+        }
+
+        // Dibujar estáticos en el mapa
+        markerRestaurante = L.marker([trackData.latRestaurante, trackData.lngRestaurante], { icon: iconRestaurante }).addTo(map).bindPopup("Restaurante");
+        markerCliente = L.marker([trackData.latCliente, trackData.lngCliente], { icon: iconCliente }).addTo(map).bindPopup("Cliente");
+
+        // Obtener el código de la orden básica
+        const orderRes = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}`);
+        if (orderRes.ok) {
+        const oData = await orderRes.json();
+        cachedConfirmationCode = oData.confirmationCode;
+        }
+
+        // 2. Cargar o crear la ruta por calles
+        const saved = loadRouteState();
+        if (saved) {
+        routeState = saved;
+        } else {
+        const url = `https://router.project-osrm.org/route/v1/driving/${trackData.lngRestaurante},${trackData.latRestaurante};${trackData.lngCliente},${trackData.latCliente}?overview=full&geometries=geojson`;
+        const osrmRes = await fetch(url);
+        const osrmData = await osrmRes.json();
+
+        const coords = osrmData.routes[0].geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+        routeState = { phase: 'moving', step: 0, coords: coords };
+        saveRouteState();
+        }
+
+        // Dibujar línea de fondo
+        const leafletCoords = routeState.coords.map(c => [c.lat, c.lng]);
+        L.polyline(leafletCoords, { color: '#FF4D2E', weight: 4, opacity: 0.4 }).addTo(map);
+
+        // 3. Arrancar motor del movimiento
+        comenzarMovimiento();
+
+        } catch (err) {
+        console.error(err);
+        }
+        }
+
+        function comenzarMovimiento() {
+        if (routeTimer) clearInterval(routeTimer);
+
+        routeTimer = setInterval(async () => {
+        if (routeState.step >= routeState.coords.length - 1) {
+        clearInterval(routeTimer);
+        routeState.phase = 'arrived';
+        saveRouteState();
+
+        document.getElementById('statusLabel').innerText = "📍 HAS LLEGADO";
+        document.getElementById('titleLabel').innerText = "Entrega lista. Solicita el código.";
+        document.getElementById('finishDeliveryMapBtn').classList.remove('hidden');
+        return;
+        }
+
+        routeState.step++;
+        saveRouteState();
+
+        const currPoint = routeState.coords[routeState.step];
+
+        document.getElementById('statusLabel').innerText = "🛵 EN CAMINO";
+        document.getElementById('titleLabel').innerText = "Simulando avance por calles...";
+
+        // Actualizar marcador visual
+        if (!markerRepartidor) {
+        markerRepartidor = L.marker([currPoint.lat, currPoint.lng], { icon: iconRepartidor }).addTo(map);
+        map.setView([currPoint.lat, currPoint.lng], 15);
+        } else {
+        markerRepartidor.setLatLng([currPoint.lat, currPoint.lng]);
+        }
+
+        // Sincronizar con el Servidor API de inmediato
+        await fetch(`${API_BASE}/api/Tracking/${ORDER_ID}/ubicacion-repartidor`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: currPoint.lat, lng: currPoint.lng })
+        });
+
+        }, 1500); // 1.5 segundos por paso para que vaya rápido y fluido
+        }
+
+        function openFinishModalDirect() {
+        document.getElementById('finishCodeInputMap').value = '';
+        document.getElementById('finishErrorMap').classList.add('hidden');
+        document.getElementById('finishModalMap').classList.remove('hidden');
+        }
+
+        function closeFinishModalDirect() { document.getElementById('finishModalMap').classList.add('hidden'); }
+
+        async function submitFinishDirect() {
+        const code = document.getElementById('finishCodeInputMap').value.trim();
+        const errorEl = document.getElementById('finishErrorMap');
+
+        if (cachedConfirmationCode && code !== cachedConfirmationCode) {
+        errorEl.innerText = "Código incorrecto.";
+        errorEl.classList.remove('hidden');
+        return;
+        }
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify("Entregado")
+        });
+
+        if (res.ok) {
+        localStorage.removeItem(`simState_${ORDER_ID}`);
+        alert("¡Pedido entregado con éxito!");
+        window.location.href = "/Delivery/Start";
+        }
+        } catch (err) { console.error(err); }
+        }
+
+        inicializarSimulacion();
+    </script>
+</body>
+</html>

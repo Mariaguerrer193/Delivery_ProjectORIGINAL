@@ -1,0 +1,194 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Panel de Admin — Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .tab-btn.active {
+        background: #14120F;
+        color: white;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- BARRA NAV LATERAL CORREGIDA Y ENLAZADA -->
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · ADMIN</div>
+            <div class="flex flex-col gap-1 text-sm font-medium">
+                <button onclick="showTab('dashboard')" class="tab-btn active px-4 py-3 rounded-xl text-left" data-tab="dashboard">📊 Dashboard Global</button>
+                <button onclick="showTab('cuentas')" class="tab-btn px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900" data-tab="cuentas">👤 Contratar Personal</button>
+                <a href="/Admin/CouponManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">🏷️ Cupones</a>
+                <a href="/Admin/ReviewModeration" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">⭐ Moderar Reseñas</a>
+                <a href="/Admin/ReportManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">🚨 Reportes Formales</a>
+                <a href="/Admin/UserManagement" class="px-4 py-3 rounded-xl text-left text-[#c8c1b0] hover:bg-neutral-900 block">👥 Control de Usuarios</a>
+            </div>
+        </div>
+        <button onclick="localStorage.clear(); window.location.href='/Auth/Login';" class="w-full bg-neutral-900 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:bg-red-600 hover:text-white">⚠️ CERRAR SESIÓN</button>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+
+        <!-- TAB: DASHBOARD GLOBAL -->
+        <div id="tab-dashboard">
+            <h1 class="font-archivo text-2xl mb-6">Métricas de la Plataforma</h1>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 max-w-5xl mb-8">
+                <div class="bg-white border-2 border-[#14120F] p-4 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <p class="text-[10px] font-bold text-neutral-400 uppercase">Ventas del Día</p>
+                    <p class="text-2xl font-black text-[#FF4D2E]" id="dashTodayVentas">$0.00</p>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-4 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <p class="text-[10px] font-bold text-neutral-400 uppercase">Pedidos de Hoy</p>
+                    <p class="text-2xl font-black" id="dashTodayOrders">0</p>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-4 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <p class="text-[10px] font-bold text-neutral-400 uppercase">Afiliados Totales</p>
+                    <p class="text-xs font-mono mt-1 text-neutral-600" id="dashTotalRest">Cargando...</p>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-4 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    <p class="text-[10px] font-bold text-neutral-400 uppercase">Repartidores Activos</p>
+                    <p class="text-xs font-mono mt-1 text-neutral-600" id="dashTotalDeliv">Cargando...</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl">
+                <div class="bg-white border-2 border-[#14120F] p-5 rounded-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <h3 class="font-archivo text-xs uppercase tracking-wider text-amber-600 mb-4">🏆 Top Productos Más Vendidos</h3>
+                    <div id="dashTopProductsList" class="space-y-2 divide-y divide-dashed divide-neutral-200"></div>
+                </div>
+                <div class="bg-white border-2 border-[#14120F] p-5 rounded-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                    <h3 class="font-archivo text-xs uppercase tracking-wider text-indigo-600 mb-4">🛵 Top Repartidores Eficientes</h3>
+                    <div id="dashTopDeliveriesList" class="space-y-2 divide-y divide-dashed divide-neutral-200"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CREAR CUENTAS -->
+        <div id="tab-cuentas" class="hidden">
+            <h1 class="font-archivo text-2xl mb-6">Proceso de Contratación Corporativa</h1>
+            <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+                <div class="flex gap-2 mb-4">
+                    <button onclick="setRole('Restaurant')" id="roleRestBtn" class="flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#14120F] bg-[#14120F] text-white">🍳 Restaurante</button>
+                    <button onclick="setRole('Delivery')" id="roleDelBtn" class="flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#E4DAC4]">🛵 Repartidor</button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input id="aName" placeholder="Nombre completo" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm sm:col-span-2 outline-none focus:border-[#FF4D2E]" />
+                    <input id="aEmail" type="email" placeholder="Correo" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="aPassword" type="password" placeholder="Contraseña" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="aPhone" placeholder="Teléfono" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="aDateBirth" type="date" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    <input id="aAddress" placeholder="Dirección" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm sm:col-span-2 outline-none focus:border-[#FF4D2E]" />
+                    <div id="restaurantFields" class="sm:col-span-2 grid grid-cols-2 gap-3">
+                        <input id="aCommercialName" placeholder="Nombre comercial" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                        <input id="aCategory" placeholder="Categoría" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FF4D2E]" />
+                    </div>
+                    <div id="deliveryFields" class="hidden sm:col-span-2">
+                        <input id="aLicense" placeholder="Número de licencia" class="border-2 border-[#E4DAC4] rounded-xl px-3 py-2 text-sm w-full outline-none focus:border-[#FF4D2E]" />
+                    </div>
+                </div>
+                <button onclick="createAccount()" class="mt-4 w-full bg-[#FF4D2E] text-white font-bold py-3 rounded-xl text-sm transition-colors hover:bg-[#14120F]">Generar Credenciales y Dar de Alta</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        let selectedRole = "Restaurant";
+
+        function showTab(tab) {
+        document.getElementById('tab-dashboard').classList.add('hidden');
+        document.getElementById('tab-cuentas').classList.add('hidden');
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        if (tab === 'dashboard') loadDashboardData();
+        }
+
+        async function loadDashboardData() {
+        try {
+        const resSum = await fetch(`${API_BASE}/api/BusinessReports/summary`);
+        if (resSum.ok) {
+        const s = await resSum.json();
+        document.getElementById('dashTodayOrders').innerText = s.todayOrders;
+        document.getElementById('dashTotalRest').innerText = `• Locales: ${s.totalRestaurants}\n• Clientes: ${s.totalClients}`;
+        document.getElementById('dashTotalDeliv').innerText = `• Activos: ${s.totalDeliveries}\n• Ítems: ${s.totalProducts}`;
+        }
+        const resDaily = await fetch(`${API_BASE}/api/BusinessReports/daily`);
+        if (resDaily.ok) {
+        const d = await resDaily.json();
+        document.getElementById('dashTodayVentas').innerText = `$${d.total.toFixed(2)}`;
+        }
+        const resProds = await fetch(`${API_BASE}/api/BusinessReports/top-products`);
+        const topProdsContainer = document.getElementById('dashTopProductsList');
+        topProdsContainer.innerHTML = '';
+        if (resProds.ok) {
+        const prods = await resProds.json();
+        prods.slice(0, 5).forEach((p, idx) => {
+        topProdsContainer.innerHTML += `<div class="flex justify-between text-xs font-mono py-2"><span>🥇 ${idx+1}. ${p.productName}</span><span class="font-bold">${p.totalSold} uds ($${p.totalRevenue.toFixed(2)})</span></div>`;
+        });
+        }
+        const resDeliv = await fetch(`${API_BASE}/api/BusinessReports/top-deliveries`);
+        const topDelivContainer = document.getElementById('dashTopDeliveriesList');
+        topDelivContainer.innerHTML = '';
+        if (resDeliv.ok) {
+        const deliverys = await resDeliv.json();
+        deliverys.slice(0, 5).forEach((d, idx) => {
+        topDelivContainer.innerHTML += `<div class="flex justify-between text-xs font-mono py-2"><span>🛵 ${idx+1}. ${d.name}</span><span class="font-bold text-emerald-600">${d.completedOrders} completados</span></div>`;
+        });
+        }
+        } catch (err) { console.error(err); }
+        }
+
+        function setRole(role) {
+        selectedRole = role;
+        document.getElementById('roleRestBtn').className = role === 'Restaurant' ? 'flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#14120F] bg-[#14120F] text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#E4DAC4]';
+        document.getElementById('roleDelBtn').className = role === 'Delivery' ? 'flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#14120F] bg-[#14120F] text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold border-2 border-[#E4DAC4]';
+        document.getElementById('restaurantFields').classList.toggle('hidden', role !== 'Restaurant');
+        document.getElementById('deliveryFields').classList.toggle('hidden', role !== 'Delivery');
+        }
+
+        async function createAccount() {
+        const payload = {
+        name: document.getElementById('aName').value,
+        email: document.getElementById('aEmail').value,
+        password: document.getElementById('aPassword').value,
+        dateBirth: document.getElementById('aDateBirth').value,
+        address: document.getElementById('aAddress').value,
+        phone: document.getElementById('aPhone').value,
+        gender: true,
+        role: selectedRole,
+        commercialName: document.getElementById('aCommercialName').value,
+        category: document.getElementById('aCategory').value,
+        license: document.getElementById('aLicense').value
+        };
+        const res = await fetch(`${API_BASE}/api/Auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+        alert(`¡Cuenta dada de alta!`);
+        location.reload();
+        } else { alert(await res.text()); }
+        }
+        loadDashboardData();
+    </script>
+</body>
+</html>

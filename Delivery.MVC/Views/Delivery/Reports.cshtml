@@ -1,0 +1,165 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reportes Formales — Repartidor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: #FBF6EC;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- ASIDE IGUAL AL DE DELIVERY -->
+    <aside class="w-64 bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-wider mb-8 font-bold text-[#FF4D2E]">DELIVERY · REPARTIDOR</div>
+            <nav class="flex flex-col gap-1 text-sm font-medium">
+                <a href="/Delivery/Start" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">📦 Ofertas</a>
+                <a href="/Delivery/Earnings" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">💰 Ganancias</a>
+                <a href="/Delivery/Reviews" class="px-4 py-3 rounded-xl text-[#c8c1b0] hover:bg-neutral-900 hover:text-white">⭐ Reseñas</a>
+                <a href="/Delivery/Reports" class="px-4 py-3 rounded-xl bg-[#FF4D2E] text-white font-semibold">🚨 Mis Reportes</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+        <h1 class="font-archivo text-2xl mb-6">🚨 Reportar Incidente de Pedido</h1>
+
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 max-w-2xl shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Selecciona el pedido del incidente</label>
+                    <select id="reportOrderSelect" onchange="onReportOrderSelected()" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] rounded-xl px-4 py-2.5 text-sm outline-none">
+                        <option value="">Cargando órdenes...</option>
+                    </select>
+                </div>
+
+                <div id="reportTargetWrapper" class="hidden">
+                    <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">¿A quién quieres reportar?</label>
+                    <div class="flex gap-3">
+                        <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                            <input type="radio" name="reportTargetType" value="client" checked /> 🙋 Cliente
+                        </label>
+                        <label class="flex items-center gap-2 border-2 border-[#E4DAC4] rounded-xl px-4 py-2 cursor-pointer text-sm font-semibold">
+                            <input type="radio" name="reportTargetType" value="restaurant" /> 🍽️ Restaurante
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 text-[#6b6455]">Motivo del reporte</label>
+                    <textarea id="reportReason" rows="4" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] rounded-xl px-4 py-2.5 text-sm outline-none resize-none" placeholder="Describe lo sucedido..."></textarea>
+                </div>
+
+                <button onclick="submitEntityReport()" class="w-full bg-[#14120F] text-white font-bold py-3 rounded-xl text-sm hover:bg-red-600 transition-all">
+                    ENVIAR REPORTE FORMAL
+                </button>
+                <span id="reportMessage" class="text-xs font-medium block hidden"></span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const DELIVERY_ID = localStorage.getItem('userId');
+        const API_BASE = "https://localhost:7042";
+
+        let reportableOrders = [];
+
+        // Se traen las órdenes ya entregadas por este repartidor, usando el endpoint real que sí existe
+        async function populateReportOrders() {
+        const select = document.getElementById('reportOrderSelect');
+        try {
+        const res = await fetch(`${API_BASE}/api/Orders/by-status/Entregado`);
+        const orders = await res.json();
+        reportableOrders = (orders || []).filter(o => o.deliveryId == DELIVERY_ID);
+
+        select.innerHTML = '<option value="">Selecciona una orden...</option>';
+
+        if (reportableOrders.length === 0) {
+        select.innerHTML = '<option value="">No tienes entregas completadas aún</option>';
+        return;
+        }
+
+        reportableOrders.forEach(o => {
+        const first = o.detailOrders && o.detailOrders[0];
+        const restName = first && first.product && first.product.restaurant ? first.product.restaurant.commercialName : 'Restaurante';
+        select.innerHTML += `<option value="${o.id}">#ORD-${o.id} · ${restName}</option>`;
+        });
+        } catch(e) {
+        console.error(e);
+        select.innerHTML = '<option value="">Error al cargar órdenes</option>';
+        }
+        }
+
+        function getSelectedReportOrder() {
+        const id = parseInt(document.getElementById('reportOrderSelect').value);
+        return reportableOrders.find(o => o.id === id);
+        }
+
+        function onReportOrderSelected() {
+        const order = getSelectedReportOrder();
+        const wrapper = document.getElementById('reportTargetWrapper');
+        wrapper.classList.toggle('hidden', !order);
+        }
+
+        async function submitEntityReport() {
+        const order = getSelectedReportOrder();
+        const reason = document.getElementById('reportReason').value;
+        const msg = document.getElementById('reportMessage');
+
+        if (!order) { showMsg("Selecciona una orden.", true); return; }
+        if (!reason) { showMsg("Escribe el motivo del reporte.", true); return; }
+
+        const type = document.querySelector('input[name="reportTargetType"]:checked').value;
+        const first = order.detailOrders && order.detailOrders[0];
+        const restaurantId = first && first.product ? first.product.restaurantId : null;
+
+        const payload = {
+        sourcePersonId: parseInt(DELIVERY_ID),
+        reason: reason,
+        clientId: type === "client" ? order.clientId : null,
+        restaurantId: type === "restaurant" ? restaurantId : null
+        };
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Reports`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+        showMsg("¡Reporte enviado con éxito!", false);
+        setTimeout(() => location.reload(), 1000);
+        } else {
+        const errorText = await res.text();
+        showMsg("Error al enviar el reporte: " + errorText, true);
+        }
+        } catch (err) {
+        showMsg("No se pudo conectar con el servidor.", true);
+        }
+        }
+
+        function showMsg(text, isError) {
+        const msg = document.getElementById('reportMessage');
+        msg.innerText = text;
+        msg.className = "text-xs font-medium block " + (isError ? "text-red-500" : "text-emerald-600");
+        }
+
+        populateReportOrders();
+    </script>
+</body>
+</html>

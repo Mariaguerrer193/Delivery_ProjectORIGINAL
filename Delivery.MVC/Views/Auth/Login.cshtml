@@ -1,0 +1,348 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --sage: #6B8F71;
+        --muted: #8A8578;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-[#14120F] text-[#FBF6EC] h-screen flex overflow-hidden">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 w-full h-full">
+
+        <!-- MITAD IZQUIERDA -->
+        <div class="hidden md:flex flex-col justify-between p-14 relative overflow-hidden bg-cover bg-center border-r border-neutral-800"
+             style="background-image: linear-gradient(to bottom, rgba(20,18,15,0.4), rgba(20,18,15,0.85)), url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1000&q=80');">
+
+            <div class="font-mono text-[13px] tracking-[0.14em] uppercase text-neutral-400 flex items-center gap-2 relative z-10">
+                <div class="w-2 h-2 rounded-full bg-[#FF4D2E] shadow-[0_0_0_4px_rgba(255,77,46,0.25)]"></div>
+                DELIVERY
+            </div>
+
+            <div class="relative z-10 max-w-md my-auto">
+                <span class="font-mono text-xs text-[#E8A33D] tracking-widest block mb-2">¡EL ANTOJO NO ESPERA!</span>
+                <h1 class="font-archivo text-4xl lg:text-5xl leading-none tracking-tight mb-4">
+                    Tu comida <br><span class="text-[#FF4D2E]">favorita</span>, en camino.
+                </h1>
+                <p class="text-neutral-300 text-sm leading-relaxed max-w-sm">
+                    Inicia sesión para rastrear tu pedido en tiempo real y disfrutar de los mejores menús locales de inmediato.
+                </p>
+            </div>
+
+            <div class="pt-6 border-t border-neutral-800 relative z-10 text-xs text-neutral-400 font-mono">
+                ENTREGA PROMEDIO DE 25 MINUTOS EN TU ZONA
+            </div>
+        </div>
+
+        <!-- MITAD DERECHA -->
+        <div class="bg-[#FBF6EC] text-[#14120F] flex items-center justify-center p-8 sm:p-16">
+            <div class="w-full max-w-md bg-white p-8 sm:p-10 rounded-2xl border-2 border-[#E4DAC4] shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
+
+                <div class="mb-6">
+                    <span class="font-mono text-[11px] tracking-wider text-[#8A8578] uppercase">Bienvenido de vuelta</span>
+                    <h2 class="font-archivo text-3xl tracking-tight mt-1">Ingresar cuenta</h2>
+                </div>
+
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label for="email" class="font-mono text-[10.5px] font-bold tracking-wider uppercase text-[#6b6455] mb-1.5 block">Correo Electrónico</label>
+                        <input type="email" id="email" placeholder="ejemplo@correo.com" required
+                               class="w-full border-2 border-[#DED4BC] bg-white rounded-xl p-3 text-sm font-medium focus:border-[#FF4D2E] outline-none transition-colors" />
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="password" class="font-mono text-[10.5px] font-bold tracking-wider uppercase text-[#6b6455] block">Contraseña</label>
+                            <button type="button" onclick="openForgotModal()" class="text-[11px] font-bold text-[#FF4D2E] hover:underline">¿Olvidaste tu contraseña?</button>
+                        </div>
+                        <input type="password" id="password" placeholder="••••••••" required
+                               class="w-full border-2 border-[#DED4BC] bg-white rounded-xl p-3 text-sm font-medium focus:border-[#FF4D2E] outline-none transition-colors" />
+                    </div>
+
+                    <button type="submit"
+                            class="w-full mt-4 bg-[#14120F] text-[#FBF6EC] hover:bg-[#FF4D2E] rounded-xl p-3.5 font-bold text-sm tracking-wide transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
+                        Entrar a mi cuenta →
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-5 border-t border-[#E4DAC4] text-center text-sm text-[#6b6455]">
+                    ¿No tienes una cuenta?
+                    <a href="/Auth/Register" class="text-[#14120F] font-bold ml-1 border-b-2 border-[#E8A33D] hover:text-[#FF4D2E] transition-colors">
+                        Regístrate aquí
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: RECUPERAR CONTRASEÑA -->
+    <div id="forgotModal" class="hidden fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white text-[#14120F] border-2 border-[#14120F] rounded-2xl p-7 max-w-sm w-full shadow-[6px_6px_0px_0px_rgba(20,18,15,1)]">
+
+            <!-- FASE 1: pedir correo -->
+            <div id="forgotStepEmail">
+                <h3 class="font-archivo text-lg mb-2">Recuperar contraseña</h3>
+                <p class="text-xs text-[#8A8578] mb-4">Ingresa tu correo y te enviaremos un código de verificación.</p>
+                <input type="email" id="forgotEmail" placeholder="tu@correo.com"
+                       class="w-full border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl p-3 text-sm font-medium outline-none mb-3" />
+                <p id="forgotEmailError" class="text-xs text-red-500 font-medium mb-3 hidden"></p>
+                <button onclick="sendForgotCode()" id="sendCodeBtn" class="w-full bg-[#14120F] text-white rounded-xl p-3 font-bold text-sm hover:bg-[#FF4D2E]">Enviar código</button>
+                <button onclick="closeForgotModal()" class="w-full mt-2 text-xs font-bold text-[#8A8578] hover:text-[#14120F]">Cancelar</button>
+            </div>
+
+            <!-- FASE 2: ingresar código -->
+            <div id="forgotStepCode" class="hidden">
+                <h3 class="font-archivo text-lg mb-2">Ingresa el código</h3>
+                <p class="text-xs text-[#8A8578] mb-4">Enviamos un código de 4 dígitos a <span id="forgotEmailLabel" class="font-bold"></span></p>
+                <input type="text" id="forgotCode" maxlength="4" placeholder="0000"
+                       class="w-full border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl p-3 text-center text-2xl font-archivo tracking-widest outline-none mb-1" />
+                <p id="forgotCodeError" class="text-xs text-red-500 font-medium mb-3 hidden">Código incorrecto</p>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="resendForgotCode()" class="flex-1 border-2 border-[#14120F] rounded-xl p-3 font-bold text-xs hover:bg-neutral-100">Reenviar código</button>
+                    <button onclick="confirmForgotCode()" class="flex-1 bg-[#14120F] text-white rounded-xl p-3 font-bold text-xs hover:bg-[#FF4D2E]">Confirmar</button>
+                </div>
+            </div>
+
+            <!-- FASE 3: nueva contraseña -->
+            <div id="forgotStepPassword" class="hidden">
+                <h3 class="font-archivo text-lg mb-2">Nueva contraseña</h3>
+                <p class="text-xs text-[#8A8578] mb-4">Escribe tu nueva contraseña.</p>
+                <input type="password" id="newPassword1" placeholder="Nueva contraseña" minlength="6"
+                       class="w-full border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl p-3 text-sm font-medium outline-none mb-3" />
+                <input type="password" id="newPassword2" placeholder="Repite la nueva contraseña" minlength="6"
+                       class="w-full border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl p-3 text-sm font-medium outline-none mb-1" />
+                <p id="passwordMatchError" class="text-xs text-red-500 font-medium mb-3 hidden">Las contraseñas no coinciden</p>
+                <button onclick="submitNewPassword()" id="changePasswordBtn" disabled
+                        class="w-full bg-neutral-300 text-white rounded-xl p-3 font-bold text-sm cursor-not-allowed transition-colors">
+                    Cambiar contraseña
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        let forgotEmailValue = "";
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const payload = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+        };
+
+        try {
+        const response = await fetch(`${API_BASE}/api/Auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+        const user = await response.json();
+
+        localStorage.setItem('userId', user.userId);
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('userRole', user.role);
+
+        if (user.role === "Client") {
+        window.location.href = '/Client/Start';
+        } else if (user.role === "Restaurant") {
+        window.location.href = '/Restaurant/Start';
+        } else if (user.role === "Delivery") {
+        window.location.href = '/Delivery/Start';
+        } else if (user.role === "Administrator") {
+        window.location.href = '/Admin/Start';
+        } else {
+        alert('Rol no reconocido.');
+        }
+        } else {
+        const errorText = await response.text();
+        alert("Error: " + errorText);
+        }
+        } catch (error) {
+        console.error(error);
+        alert("No se pudo conectar con la API. Asegúrate de que esté corriendo en el puerto 7042.");
+        }
+        });
+
+        // ---- Modal de recuperar contraseña ----
+        function openForgotModal() {
+        document.getElementById('forgotModal').classList.remove('hidden');
+        showForgotStep('Email');
+        }
+
+        function closeForgotModal() {
+        document.getElementById('forgotModal').classList.add('hidden');
+        document.getElementById('forgotEmail').value = '';
+        document.getElementById('forgotCode').value = '';
+        document.getElementById('newPassword1').value = '';
+        document.getElementById('newPassword2').value = '';
+        document.getElementById('forgotEmailError').classList.add('hidden');
+        document.getElementById('forgotCodeError').classList.add('hidden');
+        }
+
+        function showForgotStep(step) {
+        ['Email', 'Code', 'Password'].forEach(s => {
+        document.getElementById('forgotStep' + s).classList.add('hidden');
+        });
+        document.getElementById('forgotStep' + step).classList.remove('hidden');
+        }
+
+        async function sendForgotCode() {
+        const email = document.getElementById('forgotEmail').value.trim();
+        const errorEl = document.getElementById('forgotEmailError');
+        errorEl.classList.add('hidden');
+
+        if (!email) { errorEl.innerText = "Ingresa tu correo."; errorEl.classList.remove('hidden'); return; }
+
+        const btn = document.getElementById('sendCodeBtn');
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, purpose: "ResetPassword" })
+        });
+
+        if (res.ok) {
+        forgotEmailValue = email;
+        document.getElementById('forgotEmailLabel').innerText = email;
+        showForgotStep('Code');
+        } else {
+        const errorText = await res.text();
+        errorEl.innerText = errorText || "No se pudo enviar el código.";
+        errorEl.classList.remove('hidden');
+        }
+        } catch (err) {
+        errorEl.innerText = "No se pudo conectar con el servidor.";
+        errorEl.classList.remove('hidden');
+        } finally {
+        btn.disabled = false;
+        btn.innerText = "Enviar código";
+        }
+        }
+
+        async function resendForgotCode() {
+        document.getElementById('forgotCode').value = '';
+        document.getElementById('forgotCodeError').classList.add('hidden');
+        await fetch(`${API_BASE}/api/Auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmailValue, purpose: "ResetPassword" })
+        });
+        alert("Se reenvió el código a tu correo.");
+        }
+
+        async function confirmForgotCode() {
+        const code = document.getElementById('forgotCode').value.trim();
+        const errorEl = document.getElementById('forgotCodeError');
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Auth/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmailValue, purpose: "ResetPassword", code: code })
+        });
+
+        if (res.ok) {
+        errorEl.classList.add('hidden');
+        showForgotStep('Password');
+        } else {
+        errorEl.innerText = "Código incorrecto";
+        errorEl.classList.remove('hidden');
+        }
+        } catch (err) {
+        errorEl.innerText = "No se pudo conectar con el servidor.";
+        errorEl.classList.remove('hidden');
+        }
+        }
+
+        // ---- Validación en vivo de las 2 contraseñas nuevas ----
+        function checkPasswordsMatch() {
+        const p1 = document.getElementById('newPassword1').value;
+        const p2 = document.getElementById('newPassword2').value;
+        const errorEl = document.getElementById('passwordMatchError');
+        const btn = document.getElementById('changePasswordBtn');
+        const input2 = document.getElementById('newPassword2');
+
+        if (p2.length === 0) {
+        errorEl.classList.add('hidden');
+        input2.classList.remove('border-red-500');
+        btn.disabled = true;
+        btn.className = "w-full bg-neutral-300 text-white rounded-xl p-3 font-bold text-sm cursor-not-allowed transition-colors";
+        return;
+        }
+
+        if (p1 === p2 && p1.length >= 6) {
+        errorEl.classList.add('hidden');
+        input2.classList.remove('border-red-500');
+        btn.disabled = false;
+        btn.className = "w-full bg-[#FF4D2E] text-white rounded-xl p-3 font-bold text-sm hover:bg-[#14120F] transition-colors";
+        } else {
+        errorEl.classList.remove('hidden');
+        input2.classList.add('border-red-500');
+        btn.disabled = true;
+        btn.className = "w-full bg-neutral-300 text-white rounded-xl p-3 font-bold text-sm cursor-not-allowed transition-colors";
+        }
+        }
+
+        document.getElementById('newPassword1').addEventListener('input', checkPasswordsMatch);
+        document.getElementById('newPassword2').addEventListener('input', checkPasswordsMatch);
+
+        async function submitNewPassword() {
+        const newPassword = document.getElementById('newPassword1').value;
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmailValue, newPassword: newPassword })
+        });
+
+        if (res.ok) {
+        alert("¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.");
+        closeForgotModal();
+        } else {
+        const errorText = await res.text();
+        alert("Error: " + errorText);
+        }
+        } catch (err) {
+        alert("No se pudo conectar con el servidor.");
+        }
+        }
+    </script>
+</body>
+</html>

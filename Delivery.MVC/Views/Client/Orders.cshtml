@@ -1,0 +1,170 @@
+﻿@*
+    Vista de Mis Pedidos para Clientes - Corregida
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mis Pedidos — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --sage: #6B8F71;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR LATERAL COMPLETO -->
+    <aside class="w-[240px] bg-[#14120F] text-[#FBF6EC] p-6 flex flex-col justify-between sticky top-0 h-screen shrink-0">
+        <div>
+            <div class="font-mono text-sm tracking-[0.12em] flex items-center gap-2 mb-8 px-2 font-bold">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#FF4D2E] shadow-[0_0_0_4px_rgba(255,77,46,0.2)]"></span>
+                DELIVERY
+            </div>
+
+            <nav class="flex flex-col gap-1">
+                <a href="/Client/Start" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏠</span> Inicio</a>
+                <a href="/Client/Search" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🔍</span> Buscar Platos</a>
+                <a href="/Client/Cart" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🛒</span> Mi Carrito</a>
+                <a href="/Client/Orders" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🧾</span> Mis Pedidos</a>
+                <a href="/Client/Reviews" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>⭐</span> Reseñas</a>
+                <a href="/Client/Coupons" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#c8c1b0] hover:bg-neutral-900 hover:text-white transition-all"><span>🏷️</span> Cupones</a>
+            </nav>
+        </div>
+
+        <!-- Usuario de la sesión -->
+        <div class="border-t border-neutral-800 pt-4 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-[#E8A33D] flex items-center justify-center font-bold text-[#14120F] text-sm font-archivo" id="avatarCircle">
+                    U
+                </div>
+                <div class="text-xs">
+                    <b class="block text-sm font-semibold text-white" id="clientName">Usuario</b>
+                    <span class="text-[#8A8578] font-mono">CLIENTE</span>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full text-center text-xs bg-neutral-900 hover:bg-red-600 hover:text-white font-bold py-2 rounded-lg transition-all font-mono">
+                CERRAR SESIÓN
+            </button>
+        </div>
+    </aside>
+
+    <!-- CUERPO PRINCIPAL -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#FBF6EC]">
+        <header class="h-20 border-b-2 border-[#E4DAC4] px-8 flex items-center bg-white shrink-0">
+            <h1 class="font-archivo text-xl tracking-tight">Historial de Pedidos</h1>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="max-w-4xl space-y-4" id="ordersContainer">
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userName');
+        const userRole = localStorage.getItem('userRole');
+
+        if (!userId || userRole !== 'Client') {
+        window.location.href = '/Auth/Login';
+        } else {
+        document.getElementById('clientName').innerText = userName;
+        document.getElementById('avatarCircle').innerText = userName.substring(0, 2).toUpperCase();
+        }
+
+        function logout() {
+        localStorage.clear();
+        window.location.href = '/Auth/Login';
+        }
+
+        async function loadOrders() {
+        try {
+        const response = await fetch(`https://localhost:7042/api/Orders/Client/${userId}`);
+        if (response.ok) {
+        const orders = await response.json();
+        renderOrders(orders);
+        } else {
+        showBackupOrders();
+        }
+        } catch (error) {
+        console.error(error);
+        showBackupOrders();
+        }
+        }
+
+        function renderOrders(orders) {
+        const container = document.getElementById('ordersContainer');
+        container.innerHTML = '';
+
+        if (orders.length === 0) {
+        container.innerHTML = `<p class="text-sm font-mono text-[#8A8578]">Aún no has realizado ningún pedido.</p>`;
+        return;
+        }
+
+        orders.forEach(o => {
+        let statusStyle = "bg-[#EFE7D6] text-[#14120F]";
+        if (o.status === "Entregado") statusStyle = "bg-[#6B8F71]/20 text-[#6B8F71]";
+        if (o.status === "En camino" || o.status === "En preparación") statusStyle = "bg-[#E8A33D]/20 text-[#E8A33D]";
+
+        container.innerHTML += `
+        <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+        <div class="flex items-center gap-3 mb-2">
+        <span class="font-mono text-xs font-bold text-[#FF4D2E]">#ORD-${o.id || o.orderId}</span>
+        <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full ${statusStyle}">${o.status || 'Pendiente'}</span>
+        </div>
+        <h4 class="font-archivo text-base text-[#14120F]">${o.restaurantName || 'Restaurante Local'}</h4>
+        <p class="text-xs text-[#8A8578] font-mono mt-1">Fecha: ${o.date || 'Reciente'}</p>
+        </div>
+        <div class="flex items-center gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-dashed border-[#E4DAC4]">
+        <div class="text-left sm:text-right">
+        <span class="block text-xs font-mono text-[#8A8578] font-bold">TOTAL</span>
+        <span class="font-archivo text-lg text-[#14120F]">$${(o.total || 0).toFixed(2)}</span>
+        </div>
+        <a href="/Client/OrderDetail?id=${o.id}" class="bg-[#14120F] text-white hover:bg-[#FF4D2E] px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap">Ver detalle →</a>
+        </div>
+        </div>
+        `;
+        });
+        }
+
+        function showBackupOrders() {
+        const backup = [
+        { id: 1024, restaurantName: "Pizzería El Búnker", status: "Entregado", date: "12/07/2026", total: 15.50 },
+        { id: 1056, restaurantName: "Burgers & Fries", status: "En Camino", date: "Hoy", total: 8.99 }
+        ];
+        renderOrders(backup);
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>

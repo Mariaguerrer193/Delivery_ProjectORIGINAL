@@ -1,0 +1,119 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Financiero — GoDelivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: white;
+        color: #14120F;
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+    </style>
+</head>
+<body class="p-12 max-w-4xl mx-auto bg-white">
+
+    <!-- CONTENEDOR DEL REPORTE NEO-BRUTALISTA EXACTO -->
+    <div class="border-4 border-black p-8 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white">
+
+        <!-- ENCABEZADO DINÁMICO -->
+        <div class="flex justify-between items-start border-b-4 border-black pb-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-black uppercase tracking-tight font-archivo" id="pdfResName">RESTAURANTE</h1>
+                <p class="text-xs font-bold text-red-500 tracking-wider uppercase mt-1">PLATAFORMA GODELIVERY</p>
+            </div>
+            <div class="text-right text-xs font-mono text-neutral-500">
+                <p>Rango: <span id="pdfRango">--</span></p>
+                <p class="mt-0.5">Emisión: <span id="pdfEmision">--</span></p>
+            </div>
+        </div>
+
+        <h2 class="text-xs font-black uppercase tracking-widest text-neutral-400 mb-4">| RESUMEN DE MÉTRICAS OPERATIVAS</h2>
+
+        <!-- CASILLEROS DE MÉTRICAS -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="border-2 border-black p-4 rounded-xl">
+                <p class="text-[10px] font-bold text-neutral-400 uppercase">Pedidos Procesados</p>
+                <p class="text-3xl font-black mt-1" id="pdfPedidos">0</p>
+            </div>
+            <div class="border-2 border-black p-4 rounded-xl bg-neutral-50">
+                <p class="text-[10px] font-bold text-neutral-400 uppercase">Ingresos Netos</p>
+                <p class="text-3xl font-black mt-1 text-red-500" id="pdfIngresos">$0.00</p>
+            </div>
+            <div class="border-2 border-black p-4 rounded-xl">
+                <p class="text-[10px] font-bold text-neutral-400 uppercase">Producto Estrella</p>
+                <p class="text-xs font-bold mt-2 truncate" id="pdfEstrella">Ninguno</p>
+            </div>
+        </div>
+
+        <h2 class="text-sm font-black uppercase tracking-widest text-neutral-400 mb-3">| DETALLE DEL RENDIMIENTO</h2>
+
+        <!-- TABLA ESTRUCTURADA -->
+        <table class="w-full text-left text-xs font-mono border-collapse border-2 border-black">
+            <thead>
+                <tr class="bg-neutral-900 text-white font-bold">
+                    <th class="p-2.5 border border-black">Métrica Operativa</th>
+                    <th class="p-2.5 border border-black text-right">Valor Registrado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-black">
+                    <td class="p-2.5 border border-black">Total de pedidos completados de forma exitosa</td>
+                    <td class="p-2.5 border border-black text-right font-bold" id="tabPedidos">0</td>
+                </tr>
+                <tr class="border-b border-black bg-neutral-50">
+                    <td class="p-2.5 border border-black">Ingresos brutos percibidos en el periodo</td>
+                    <td class="p-2.5 border border-black text-right font-bold text-red-500" id="tabIngresos">$0.00</td>
+                </tr>
+                <tr>
+                    <td class="p-2.5 border border-black">Ítem de mayor demanda comercial</td>
+                    <td class="p-2.5 border border-black text-right font-bold" id="tabEstrella">Ninguno</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- PIE DE PÁGINA CORPORATIVO -->
+        <div class="mt-8 pt-4 border-t-2 border-dashed border-neutral-300 text-center">
+            <p class="text-[10px] font-mono text-neutral-400">Generado de forma automática y certificado por la Plataforma de Delivery GoDelivery.</p>
+            <p class="text-[9px] font-bold text-neutral-400 mt-2">Página 1</p>
+        </div>
+    </div>
+
+    <script>
+        // Mapeo dinámico leyendo la URL sin interferencias de Razor
+        window.onload = function () {
+        const params = new URLSearchParams(window.location.search);
+
+        document.getElementById('pdfResName').innerText = params.get('resName') || 'RESTAURANTE';
+        document.getElementById('pdfRango').innerText = `${params.get('desde')} al ${params.get('hasta')}`;
+        document.getElementById('pdfEmision').innerText = new Date().toLocaleDateString();
+
+        const ingresos = params.get('ingresos') || '$0.00';
+        const pedidos = params.get('pedidos') || '0';
+        const estrella = params.get('estrella') || 'Ninguno';
+
+        document.getElementById('pdfIngresos').innerText = ingresos;
+        document.getElementById('tabIngresos').innerText = ingresos;
+
+        document.getElementById('pdfPedidos').innerText = pedidos;
+        document.getElementById('tabPedidos').innerText = pedidos;
+
+        document.getElementById('pdfEstrella').innerText = estrella;
+        document.getElementById('tabEstrella').innerText = estrella;
+
+        // Disparar la conversión nativa a PDF e imprimir de inmediato
+        window.print();
+        setTimeout(() => { window.close(); }, 1000);
+        };
+    </script>
+</body>
+</html>

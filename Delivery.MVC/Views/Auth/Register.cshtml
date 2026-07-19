@@ -1,0 +1,340 @@
+﻿@*
+    Vista de Registro para nuevos Clientes - con verificación de correo y confirmación de contraseña
+*@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crear Cuenta — Delivery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+        --ink: #14120F;
+        --paper: #FBF6EC;
+        --paper-dim: #EFE7D6;
+        --chile: #FF4D2E;
+        --mustard: #E8A33D;
+        --card-line: #E4DAC4;
+        }
+
+        body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--paper-dim);
+        color: var(--ink);
+        }
+
+        .font-archivo {
+        font-family: 'Archivo Black', sans-serif;
+        }
+
+        .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-[500px] bg-white border-2 border-[#14120F] rounded-2xl p-8 shadow-[6px_6px_0px_0px_rgba(20,18,15,1)] my-8">
+
+        <div class="mb-6">
+            <div class="font-mono text-xs tracking-wider text-[#FF4D2E] font-bold mb-2">📦 REGISTRO DE USUARIO</div>
+            <h1 class="font-archivo text-2xl tracking-tight">Únete a la plataforma</h1>
+            <p class="text-neutral-500 text-sm mt-1">Crea tu cuenta de cliente en menos de un minuto.</p>
+        </div>
+
+        <div id="errorAlert" class="hidden bg-red-50 border border-red-200 text-red-600 text-xs font-medium p-3 rounded-xl mb-6 font-mono">
+            Ocurrió un error al procesar el registro.
+        </div>
+
+        <form id="registerForm" onsubmit="handleRegister(event)" class="flex flex-col gap-4">
+
+            <div>
+                <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Nombre Completo</label>
+                <input type="text" id="regName" required placeholder="María Guerrero"
+                       class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Correo</label>
+                    <div class="flex gap-2">
+                        <input type="email" id="regEmail" required placeholder="maria@correo.com"
+                               class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+                        <button type="button" id="verifyEmailBtn" onclick="openVerifyModal()" class="shrink-0 bg-[#14120F] text-white text-xs font-bold px-3 rounded-xl hover:bg-[#FF4D2E]">Verificar</button>
+                    </div>
+                    <p id="emailVerifiedLabel" class="hidden text-xs font-bold text-emerald-600 mt-1">✓ Correo verificado</p>
+                </div>
+                <div>
+                    <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Teléfono</label>
+                    <input type="tel" id="regPhone" required placeholder="0999999999"
+                           class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Fecha de Nacimiento</label>
+                    <input type="date" id="regDateBirth" required
+                           class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors" />
+                </div>
+                <div>
+                    <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Género</label>
+                    <select id="regGender" class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors">
+                        <option value="true">Femenino</option>
+                        <option value="false">Masculino</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Dirección Principal</label>
+                <input type="text" id="regAddress" required placeholder="Calle, número de casa o referencia"
+                       class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+            </div>
+
+            <div>
+                <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Contraseña</label>
+                <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres" minlength="6"
+                       class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+            </div>
+
+            <div>
+                <label class="block text-[10.5px] font-bold font-mono uppercase mb-1 text-[#6b6455]">Repite la Contraseña</label>
+                <input type="password" id="regPassword2" required placeholder="Vuelve a escribir tu contraseña" minlength="6"
+                       class="w-full bg-[#FBF6EC] border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-colors placeholder-neutral-400" />
+                <p id="regPasswordError" class="hidden text-xs text-red-500 font-medium mt-1">Las contraseñas no coinciden</p>
+            </div>
+
+            <button type="submit" id="createAccountBtn" disabled
+                    class="w-full bg-neutral-300 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide mt-2 cursor-not-allowed transition-all">
+                Crea mi cuenta →
+            </button>
+        </form>
+
+        <div class="text-center mt-6 pt-5 border-t border-dashed border-[#E4DAC4]">
+            <p class="text-sm text-[#6b6455]">
+                ¿Ya tienes cuenta?
+                <a href="/Auth/Login" class="text-[#14120F] font-bold ml-1 border-b-2 border-[#E8A33D] hover:text-[#FF4D2E] transition-colors">Inicia sesión</a>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- MODAL: VERIFICAR CORREO -->
+    <div id="verifyModal" class="hidden fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white text-[#14120F] border-2 border-[#14120F] rounded-2xl p-7 max-w-sm w-full shadow-[6px_6px_0px_0px_rgba(20,18,15,1)]">
+
+            <!-- FASE 1: enviar código -->
+            <div id="verifyStepSend">
+                <h3 class="font-archivo text-lg mb-2">Verificar tu correo</h3>
+                <p class="text-xs text-[#8A8578] mb-4">Te enviaremos un código a <span id="verifyEmailLabel" class="font-bold"></span></p>
+                <p id="verifySendError" class="text-xs text-red-500 font-medium mb-3 hidden"></p>
+                <button onclick="sendVerifyCode()" id="sendVerifyBtn" class="w-full bg-[#14120F] text-white rounded-xl p-3 font-bold text-sm hover:bg-[#FF4D2E]">Enviar código</button>
+                <button onclick="closeVerifyModal()" class="w-full mt-2 text-xs font-bold text-[#8A8578] hover:text-[#14120F]">Cancelar</button>
+            </div>
+
+            <!-- FASE 2: ingresar código -->
+            <div id="verifyStepCode" class="hidden">
+                <h3 class="font-archivo text-lg mb-2">Ingresa el código</h3>
+                <p class="text-xs text-[#8A8578] mb-4">Revisa tu correo, el código expira en 10 minutos.</p>
+                <input type="text" id="verifyCode" maxlength="4" placeholder="0000"
+                       class="w-full border-2 border-[#E4DAC4] focus:border-[#FF4D2E] rounded-xl p-3 text-center text-2xl font-archivo tracking-widest outline-none mb-1" />
+                <p id="verifyCodeError" class="text-xs text-red-500 font-medium mb-3 hidden">Código incorrecto</p>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="resendVerifyCode()" class="flex-1 border-2 border-[#14120F] rounded-xl p-3 font-bold text-xs hover:bg-neutral-100">Reenviar código</button>
+                    <button onclick="confirmVerifyCode()" class="flex-1 bg-[#14120F] text-white rounded-xl p-3 font-bold text-xs hover:bg-[#FF4D2E]">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://localhost:7042";
+        let emailVerified = false;
+        let verifyingEmailValue = "";
+
+        // ---- Modal de verificación de correo ----
+        function openVerifyModal() {
+        const email = document.getElementById('regEmail').value.trim();
+        if (!email) { alert("Escribe tu correo primero."); return; }
+
+        verifyingEmailValue = email;
+        document.getElementById('verifyEmailLabel').innerText = email;
+        document.getElementById('verifySendError').classList.add('hidden');
+        document.getElementById('verifyModal').classList.remove('hidden');
+        showVerifyStep('Send');
+        }
+
+        function closeVerifyModal() {
+        document.getElementById('verifyModal').classList.add('hidden');
+        document.getElementById('verifyCode').value = '';
+        }
+
+        function showVerifyStep(step) {
+        ['Send', 'Code'].forEach(s => document.getElementById('verifyStep' + s).classList.add('hidden'));
+        document.getElementById('verifyStep' + step).classList.remove('hidden');
+        }
+
+        async function sendVerifyCode() {
+        const errorEl = document.getElementById('verifySendError');
+        errorEl.classList.add('hidden');
+
+        const btn = document.getElementById('sendVerifyBtn');
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyingEmailValue, purpose: "Register" })
+        });
+
+        if (res.ok) {
+        showVerifyStep('Code');
+        } else {
+        const errorText = await res.text();
+        errorEl.innerText = errorText || "No se pudo enviar el código.";
+        errorEl.classList.remove('hidden');
+        }
+        } catch (err) {
+        errorEl.innerText = "No se pudo conectar con el servidor.";
+        errorEl.classList.remove('hidden');
+        } finally {
+        btn.disabled = false;
+        btn.innerText = "Enviar código";
+        }
+        }
+
+        async function resendVerifyCode() {
+        document.getElementById('verifyCode').value = '';
+        document.getElementById('verifyCodeError').classList.add('hidden');
+        await fetch(`${API_BASE}/api/Auth/send-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyingEmailValue, purpose: "Register" })
+        });
+        alert("Se reenvió el código a tu correo.");
+        }
+
+        async function confirmVerifyCode() {
+        const code = document.getElementById('verifyCode').value.trim();
+        const errorEl = document.getElementById('verifyCodeError');
+
+        try {
+        const res = await fetch(`${API_BASE}/api/Auth/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyingEmailValue, purpose: "Register", code: code })
+        });
+
+        if (res.ok) {
+        errorEl.classList.add('hidden');
+        emailVerified = true;
+        document.getElementById('emailVerifiedLabel').classList.remove('hidden');
+        document.getElementById('regEmail').setAttribute('readonly', 'true');
+        document.getElementById('verifyEmailBtn').disabled = true;
+        document.getElementById('verifyEmailBtn').innerText = "✓ Verificado";
+        closeVerifyModal();
+        checkCreateButtonState();
+        } else {
+        errorEl.innerText = "Código incorrecto";
+        errorEl.classList.remove('hidden');
+        }
+        } catch (err) {
+        errorEl.innerText = "No se pudo conectar con el servidor.";
+        errorEl.classList.remove('hidden');
+        }
+        }
+
+        // ---- Validación en vivo de las contraseñas + habilitar botón de crear cuenta ----
+        function checkCreateButtonState() {
+        const p1 = document.getElementById('regPassword').value;
+        const p2 = document.getElementById('regPassword2').value;
+        const errorEl = document.getElementById('regPasswordError');
+        const input2 = document.getElementById('regPassword2');
+        const btn = document.getElementById('createAccountBtn');
+
+        let passwordsOk = false;
+
+        if (p2.length === 0) {
+        errorEl.classList.add('hidden');
+        input2.classList.remove('border-red-500');
+        } else if (p1 === p2 && p1.length >= 6) {
+        errorEl.classList.add('hidden');
+        input2.classList.remove('border-red-500');
+        passwordsOk = true;
+        } else {
+        errorEl.classList.remove('hidden');
+        input2.classList.add('border-red-500');
+        }
+
+        if (emailVerified && passwordsOk) {
+        btn.disabled = false;
+        btn.className = "w-full bg-[#FF4D2E] text-white hover:bg-[#14120F] font-bold py-3.5 rounded-xl text-sm tracking-wide transition-all shadow-[2px_2px_0px_0px_rgba(20,18,15,1)] mt-2";
+        } else {
+        btn.disabled = true;
+        btn.className = "w-full bg-neutral-300 text-white font-bold py-3.5 rounded-xl text-sm tracking-wide mt-2 cursor-not-allowed transition-all";
+        }
+        }
+
+        document.getElementById('regPassword').addEventListener('input', checkCreateButtonState);
+        document.getElementById('regPassword2').addEventListener('input', checkCreateButtonState);
+
+        async function handleRegister(e) {
+        e.preventDefault();
+
+        if (!emailVerified) {
+        alert("Debes verificar tu correo antes de crear la cuenta.");
+        return;
+        }
+
+        const errorAlert = document.getElementById('errorAlert');
+        errorAlert.classList.add('hidden');
+
+        const payload = {
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        dateBirth: document.getElementById('regDateBirth').value,
+        address: document.getElementById('regAddress').value,
+        phone: document.getElementById('regPhone').value,
+        gender: document.getElementById('regGender').value === 'true',
+        role: "Client",
+        mainAddress: document.getElementById('regAddress').value,
+        latitude: -0.3421,
+        longitude: -78.1234
+        };
+
+        try {
+        const response = await fetch(`${API_BASE}/api/Auth/register`, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+        alert("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.");
+        window.location.href = '/Auth/Login';
+        } else {
+        const errorText = await response.text();
+        errorAlert.innerText = errorText || "Los datos son incorrectos o el correo ya existe.";
+        errorAlert.classList.remove('hidden');
+        }
+        } catch (error) {
+        console.error(error);
+        errorAlert.innerText = "Error de conexión con el servidor de la API.";
+        errorAlert.classList.remove('hidden');
+        }
+        }
+    </script>
+</body>
+</html>
