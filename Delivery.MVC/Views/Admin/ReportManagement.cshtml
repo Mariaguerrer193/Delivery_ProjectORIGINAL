@@ -57,10 +57,11 @@
         }
         reports.forEach(r => {
         let denunciado = "Objeto no definido";
-        if (r.restaurantId) denunciado = `🍽️ Restaurante (ID: ${r.restaurantId})`;
-        else if (r.deliveryId) denunciado = `🛵 Repartidor (ID: ${r.deliveryId})`;
-        else if (r.productId) denunciado = `🍔 Producto (ID: ${r.productId})`;
-        else if (r.clientId) denunciado = `👤 Cliente (ID: ${r.clientId})`;
+        if (r.restaurantId) denunciado = `🍽️ Restaurante: ${r.restaurant ? (r.restaurant.commercialName || r.restaurant.name) : 'ID ' + r.restaurantId}`;
+        else if (r.deliveryId) denunciado = `🛵 Repartidor: ${r.delivery ? r.delivery.name : 'ID ' + r.deliveryId}`;
+        else if (r.productId) denunciado = `🍔 Producto: ${r.product ? r.product.name : 'ID ' + r.productId}`;
+        else if (r.clientId) denunciado = `👤 Cliente: ${r.client ? r.client.name : 'ID ' + r.clientId}`;
+
 
         container.innerHTML += `
         <div class="bg-white border-2 border-[#14120F] rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">

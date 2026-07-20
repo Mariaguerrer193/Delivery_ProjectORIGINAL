@@ -26,6 +26,10 @@ namespace Delivery.API.Controllers
         {
             return await _context.Reports
                 .Include(r => r.SourcePerson)
+                .Include(r => r.Restaurant)
+                .Include(r => r.Delivery)
+                .Include(r => r.Product)
+                .Include(r => r.Client)
                 .Where(r => !r.IsResolved)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
