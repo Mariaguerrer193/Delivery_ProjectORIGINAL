@@ -12,6 +12,8 @@ namespace Delivery.MVC.Controllers
         public IActionResult Cart() { return View(); }
         public IActionResult Tracking() { return View(); }
 
+        public IActionResult Receipt() { return View(); }
+
         // NUEVAS
         public IActionResult Menu() { return View(); }
         public IActionResult OrderDetail() { return View(); }

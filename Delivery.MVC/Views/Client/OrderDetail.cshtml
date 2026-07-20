@@ -36,14 +36,19 @@
         <a href="/Client/Orders" class="text-xs font-bold text-[#8A8578] mb-4 inline-block">← Volver a mis pedidos</a>
 
         <div class="bg-white border-2 border-[#14120F] rounded-2xl p-6 shadow-[4px_4px_0px_0px_rgba(20,18,15,1)]">
-            <div class="flex justify-between items-start mb-4">
+            <div class="flex justify-between items-start mb-4 gap-3">
                 <div>
                     <span class="font-mono text-xs text-[#FF4D2E] font-bold">PEDIDO #<span id="orderId">-</span></span>
                     <h1 class="font-archivo text-xl mt-1" id="orderStatus">Cargando...</h1>
                 </div>
-                <button id="mapBtn" onclick="verMapa()" class="bg-[#14120F] text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-[#FF4D2E]">
-                    Ver en el mapa →
-                </button>
+                <div class="flex gap-2 shrink-0">
+                    <a id="receiptBtn" href="#" class="bg-white border-2 border-[#14120F] text-[#14120F] px-4 py-3 rounded-xl text-sm font-bold hover:bg-[#14120F] hover:text-white transition-colors inline-block">
+                        🧾 Recibo
+                    </a>
+                    <button id="mapBtn" onclick="verMapa()" class="bg-[#14120F] text-white px-4 py-3 rounded-xl text-sm font-bold hover:bg-[#FF4D2E]">
+                        Ver en el mapa →
+                    </button>
+                </div>
             </div>
 
             <div id="itemsList" class="border-t border-dashed border-[#E4DAC4] pt-4 mt-4 space-y-2"></div>
@@ -67,7 +72,7 @@
 
         document.getElementById('orderId').innerText = order.id;
         document.getElementById('orderStatus').innerText = order.status;
-
+        document.getElementById('receiptBtn').href = `/Client/Receipt?id=${order.id}`;
         // CORRECCIÓN: Se eliminó el "if (order.status === 'En camino')"
         // Ahora el código de confirmación se muestra SIEMPRE desde que se crea el pedido
         if (order.confirmationCode) {

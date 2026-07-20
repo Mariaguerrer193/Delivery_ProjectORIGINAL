@@ -1,0 +1,254 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Recibo — GoDelivery</title>
+    <style>
+            body {
+                font-family: 'Helvetica', Arial, sans-serif;
+                color: #14120F;
+                background-color: #EFE7D6;
+                margin: 0;
+                padding: 40px 16px;
+            }
+
+            .receipt-wrapper {
+                max-width: 640px;
+                margin: 0 auto;
+            }
+
+            .actions {
+                max-width: 640px;
+                margin: 0 auto 16px auto;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                .actions a, .actions button {
+                    font-family: 'Helvetica', Arial, sans-serif;
+                    font-size: 13px;
+                    font-weight: bold;
+                    text-decoration: none;
+                    color: #14120F;
+                    cursor: pointer;
+                    border: none;
+                    background: none;
+                }
+
+                .actions button {
+                    background-color: #14120F;
+                    color: white;
+                    padding: 10px 18px;
+                    border-radius: 10px;
+                }
+
+            .receipt {
+                background: white;
+                border: 2px solid #14120F;
+                border-radius: 16px;
+                padding: 40px;
+                box-shadow: 4px 4px 0px 0px rgba(20,18,15,1);
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                border-bottom: 3px solid #14120F;
+                padding-bottom: 16px;
+                margin-bottom: 24px;
+            }
+
+            .brand {
+                font-weight: 900;
+                font-size: 26px;
+                letter-spacing: -0.5px;
+            }
+
+                .brand span {
+                    color: #FF4D2E;
+                }
+
+            .meta {
+                text-align: right;
+                font-size: 12px;
+                color: #555;
+                line-height: 1.6;
+            }
+
+            .section-title {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #8A8578;
+                margin-bottom: 6px;
+                margin-top: 20px;
+                font-weight: bold;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 8px;
+                font-size: 14px;
+            }
+
+            thead th {
+                text-align: left;
+                font-size: 11px;
+                text-transform: uppercase;
+                color: #8A8578;
+                border-bottom: 2px solid #14120F;
+                padding-bottom: 6px;
+            }
+
+            tbody tr {
+                border-bottom: 1px dashed #E4DAC4;
+            }
+
+            tbody td {
+                padding: 8px 0;
+            }
+
+            .total-row {
+                border-top: 3px solid #14120F;
+                margin-top: 10px;
+                padding-top: 14px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 20px;
+                font-weight: 900;
+            }
+
+            .footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 11px;
+                color: #8A8578;
+                border-top: 1px solid #E4DAC4;
+                padding-top: 16px;
+            }
+
+            @@media print {
+                body {
+                    background: white;
+                    padding: 0;
+                }
+
+                .actions {
+                    display: none;
+                }
+
+                .receipt {
+                    border: none;
+                    box-shadow: none;
+                    border-radius: 0;
+                }
+            }
+    </style>
+</head>
+<body>
+
+    <div class="actions">
+        <a href="javascript:history.back()">← Volver</a>
+        <button onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+    </div>
+
+    <div class="receipt-wrapper">
+        <div class="receipt" id="receiptContent">
+            <p style="text-align:center; color:#8A8578; font-family:sans-serif;">Cargando recibo...</p>
+        </div>
+    </div>
+
+    <script>
+            const params = new URLSearchParams(window.location.search);
+            const ORDER_ID = params.get('id');
+            const API_BASE = "https://localhost:7042";
+            const clientName = localStorage.getItem('userName') || 'Cliente';
+
+            async function loadReceipt() {
+            const container = document.getElementById('receiptContent');
+
+            if (!ORDER_ID) {
+            container.innerHTML = `<p style="text-align:center; color:#c0392b;">No se especificó un pedido válido.</p>`;
+            return;
+            }
+
+            try {
+            const res = await fetch(`${API_BASE}/api/Orders/${ORDER_ID}`);
+            if (!res.ok) throw new Error("No se pudo obtener el pedido.");
+            const order = await res.json();
+
+            const items = order.detailOrders || [];
+            let total = 0;
+
+            const restaurantName = (items[0] && items[0].product && items[0].product.restaurant)
+            ? (items[0].product.restaurant.commercialName || items[0].product.restaurant.name)
+            : "Restaurante";
+
+            const fecha = order.orderDate
+            ? new Date(order.orderDate).toLocaleString('es-EC', { dateStyle: 'long', timeStyle: 'short' })
+            : new Date().toLocaleString('es-EC', { dateStyle: 'long', timeStyle: 'short' });
+
+            const filasHtml = items.map(d => {
+            const subtotal = d.quantity * d.price;
+            total += subtotal;
+            return `
+            <tr>
+            <td>${d.product ? d.product.name : 'Producto'}</td>
+            <td style="text-align:center;">${d.quantity}</td>
+            <td style="text-align:right;">$${d.price.toFixed(2)}</td>
+            <td style="text-align:right;">$${subtotal.toFixed(2)}</td>
+            </tr>`;
+            }).join('');
+
+            container.innerHTML = `
+            <div class="header">
+            <div class="brand">Go<span>Delivery</span></div>
+            <div class="meta">
+            RECIBO DE PEDIDO<br/>
+            N.° ${order.id}<br/>
+            ${fecha}
+            </div>
+            </div>
+
+            <div class="section-title">Cliente</div>
+            <div>${clientName}</div>
+
+            <div class="section-title">Restaurante</div>
+            <div>${restaurantName}</div>
+
+            <div class="section-title">Detalle del pedido</div>
+            <table>
+            <thead>
+            <tr><th>Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">P. Unit.</th><th style="text-align:right;">Subtotal</th></tr>
+            </thead>
+            <tbody>
+            ${filasHtml}
+            </tbody>
+            </table>
+
+            <div class="total-row">
+            <span>TOTAL</span>
+            <span>$${total.toFixed(2)}</span>
+            </div>
+
+            <div class="footer">
+            Gracias por tu pedido en GoDelivery.<br/>
+            Este recibo fue generado electrónicamente y no requiere firma.
+            </div>
+            `;
+            } catch (err) {
+            console.error(err);
+            container.innerHTML = `<p style="text-align:center; color:#c0392b;">No se pudo cargar el recibo. Intenta nuevamente.</p>`;
+            }
+            }
+
+            loadReceipt();
+    </script>
+</body>
+</html>
