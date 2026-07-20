@@ -68,10 +68,10 @@
         <div class="bg-[#14120F] text-[#FBF6EC] rounded-2xl p-6 flex justify-between items-center gap-6 mb-8 relative overflow-hidden shadow-[4px_4px_0px_0px_rgba(255,77,46,0.2)]">
             <div class="relative z-10">
                 <div class="font-mono text-[11px] tracking-wider text-[#E8A33D] flex items-center gap-2">
-                    <div class="blip"></div> PEDIDO ACTIVO · EN PREPARACIÓN
+                    <div class="blip"></div> Haz tus pedidos con nosotros
                 </div>
-                <h2 class="font-archivo text-xl mt-2">Tu comida se está cocinando</h2>
-                <p class="text-neutral-400 text-xs mt-1">El sistema notificará a los repartidores disponibles en cuanto esté listo.</p>
+                <h2 class="font-archivo text-xl mt-2">Bienvenido a GoDeliver</h2>
+                <p class="text-neutral-400 text-xs mt-1">Una aplicación de pedidos en linea</p>
             </div>
             <div class="ao-route relative w-[180px] h-[60px] hidden sm:block">
                 <svg viewBox="0 0 180 60">
@@ -79,9 +79,7 @@
                     <path class="p" d="M5 50 C 50 50, 50 10, 90 10 S 150 50, 175 20"></path>
                 </svg>
             </div>
-            <button onclick="window.location.href='/Client/Tracking?orderId=' + (localStorage.getItem('activeOrderId') || 1)" class="bg-[#FF4D2E] text-white hover:bg-white hover:text-[#14120F] border-none font-bold py-3 px-5 rounded-xl text-xs tracking-wide transition-all font-archivo shrink-0 relative z-10">
-                VER EN MAPA →
-            </button>
+       
         </div>
 
         <div class="flex gap-2 flex-wrap mb-2" id="categoryFilterBar">
