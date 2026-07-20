@@ -91,6 +91,7 @@
         <div id="tab-resenas" class="hidden">
             <div class="flex justify-between items-center mb-6 max-w-2xl">
                 <h1 class="font-archivo text-2xl">Opiniones de Clientes</h1>
+                <!-- Filtro de estrellas global -->
                 <select id="filterRating" onchange="loadMyReviews()" class="bg-white border-2 border-[#14120F] rounded-xl px-4 py-2 text-xs font-bold outline-none cursor-pointer">
                     <option value="0">⭐ Todas las estrellas</option>
                     <option value="5">★★★★★ (5)</option>
@@ -100,6 +101,13 @@
                     <option value="1">★☆☆☆☆ (1)</option>
                 </select>
             </div>
+
+            <!-- Navegación interna de reseñas -->
+            <div class="flex gap-2 mb-6">
+                <button onclick="switchReviewsTab('restaurant')" id="btnTabRest" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#14120F] text-white">Del Restaurante</button>
+                <button onclick="switchReviewsTab('products')" id="btnTabProds" class="px-4 py-2 rounded-xl text-xs font-bold border-2 border-[#14120F] text-[#14120F]">De los Platos</button>
+            </div>
+
             <div id="reviewsList" class="space-y-4 max-w-2xl"></div>
         </div>
 
@@ -426,20 +434,42 @@
         }
         }
 
+        let currentReviewsTab = 'restaurant'; // Estado inicial
+
+        function switchReviewsTab(tab) {
+        currentReviewsTab = tab;
+        // Cambiar estilos de botones
+        document.getElementById('btnTabRest').className = tab === 'restaurant' ? "px-4 py-2 rounded-xl text-xs font-bold bg-[#14120F] text-white" : "px-4 py-2 rounded-xl text-xs font-bold border-2 border-[#14120F] text-[#14120F]";
+        document.getElementById('btnTabProds').className = tab === 'products' ? "px-4 py-2 rounded-xl text-xs font-bold bg-[#14120F] text-white" : "px-4 py-2 rounded-xl text-xs font-bold border-2 border-[#14120F] text-[#14120F]";
+        loadMyReviews();
+        }
+
+        
         async function loadMyReviews() {
         try {
         const res = await fetch(`${API_BASE}/api/Reviews`);
         if (!res.ok) return;
         const reviews = await res.json();
 
-        // Obtenemos el filtro actual
         const filterVal = parseInt(document.getElementById('filterRating').value);
         const list = document.getElementById('reviewsList');
         list.innerHTML = '';
 
-        // Filtramos: primero por ID del restaurante, luego por estrellas si filterVal > 0
-        let myReviews = (reviews || []).filter(r => r.restaurantId == RESTAURANT_ID);
+        const myId = Number(RESTAURANT_ID);
+        let myReviews = [];
 
+        // 1. FILTRADO POR PESTAÑA (cada tipo de reseña verifica pertenencia distinto)
+        if (currentReviewsTab === 'products') {
+        // Reseñas de producto: no tienen restaurantId propio, hay que mirar r.product.restaurantId
+        myReviews = (reviews || []).filter(r =>
+        r.productId && r.product && Number(r.product.restaurantId) === myId
+        );
+        } else {
+        // Reseñas directas al restaurante
+        myReviews = (reviews || []).filter(r => Number(r.restaurantId) === myId);
+        }
+
+        // 2. FILTRADO POR ESTRELLAS
         if (filterVal > 0) {
         myReviews = myReviews.filter(r => r.rating == filterVal);
         }
@@ -451,7 +481,9 @@
 
         myReviews.forEach(r => {
         let stars = '⭐'.repeat(r.rating || 5);
-        let nombreCliente = r.client?.name || 'Cliente de GoDeliver';
+        let nombreCliente = r.client?.name || 'Cliente';
+        let nombrePlato = r.productName || (r.product ? r.product.name : '');
+        let subInfo = nombrePlato ? `<p class="text-[10px] font-mono text-amber-600 mt-1">🍔 Plato: ${nombrePlato}</p>` : '';
 
         list.innerHTML += `
         <div class="bg-white border-2 border-[#14120F] rounded-2xl p-4 shadow-[3px_3px_0px_0px_rgba(20,18,15,1)]">
@@ -460,13 +492,15 @@
         <span class="text-xs font-mono text-amber-500">${stars}</span>
         </div>
         <p class="text-xs text-neutral-600 mt-1">"${r.comment || 'Sin comentarios.'}"</p>
+        ${subInfo}
         <button onclick="openReportModal(${r.id})" class="mt-3 block text-[9px] font-bold text-red-600 border border-red-200 px-2 py-1 rounded-lg hover:bg-red-50">
         🚩 Reportar esta reseña
         </button>
         </div>`;
         });
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error("Error:", err); }
         }
+
 
         // 🎯 LOGICA DE FILTRADO REPARADA: Sincroniza zonas horarias UTC-5 de Ecuador sin congelar los datos
         async function calculateLocalMetrics() {

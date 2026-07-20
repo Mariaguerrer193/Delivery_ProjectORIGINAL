@@ -26,6 +26,7 @@ namespace Delivery.API.Controllers
         {
             return await _context.Reviews
                 .Include(r => r.Client)
+                .Include(r => r.Product)
                 .Where(r => !r.IsRemoved)
                 .ToListAsync();
         }
